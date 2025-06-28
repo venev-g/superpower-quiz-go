@@ -1,11 +1,52 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState } from 'react';
+import WelcomeScreen from '../components/WelcomeScreen';
+import QuizScreen from '../components/QuizScreen';
+import VerdictScreen from '../components/VerdictScreen';
+
+export type AppState = 'welcome' | 'quiz' | 'verdict';
 
 const Index = () => {
+  const [currentScreen, setCurrentScreen] = useState<AppState>('welcome');
+  const [quizProgress, setQuizProgress] = useState(0);
+  const [answers, setAnswers] = useState<number[]>([]);
+
+  const handleStartQuiz = () => {
+    setCurrentScreen('quiz');
+  };
+
+  const handleQuizComplete = (finalAnswers: number[]) => {
+    setAnswers(finalAnswers);
+    setCurrentScreen('verdict');
+  };
+
+  const handleRestartQuiz = () => {
+    setCurrentScreen('welcome');
+    setQuizProgress(0);
+    setAnswers([]);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      <div className="container mx-auto px-4 py-8 max-w-md">
+        {currentScreen === 'welcome' && (
+          <WelcomeScreen onStart={handleStartQuiz} />
+        )}
+        
+        {currentScreen === 'quiz' && (
+          <QuizScreen 
+            onComplete={handleQuizComplete}
+            progress={quizProgress}
+            onProgressUpdate={setQuizProgress}
+          />
+        )}
+        
+        {currentScreen === 'verdict' && (
+          <VerdictScreen 
+            answers={answers}
+            onRestart={handleRestartQuiz}
+          />
+        )}
       </div>
     </div>
   );

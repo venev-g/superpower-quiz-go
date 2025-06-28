@@ -1,0 +1,60 @@
+
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+interface Question {
+  id: number;
+  title: string;
+  subtitle: string;
+  options: string[];
+}
+
+interface QuestionCardProps {
+  question: Question;
+  onAnswerSelect: (answerIndex: number) => void;
+  questionNumber: number;
+}
+
+const QuestionCard: React.FC<QuestionCardProps> = ({ 
+  question, 
+  onAnswerSelect, 
+  questionNumber 
+}) => {
+  return (
+    <Card className="w-full max-w-md p-6 bg-white/80 backdrop-blur-sm shadow-xl border-0 rounded-3xl animate-fade-in">
+      <div className="space-y-6">
+        {/* Question Header */}
+        <div className="text-center space-y-2">
+          <div className="text-sm font-medium text-purple-600 bg-purple-100 px-3 py-1 rounded-full inline-block">
+            {question.subtitle}
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 leading-tight">
+            {question.title}
+          </h2>
+        </div>
+
+        {/* Answer Options */}
+        <div className="space-y-3">
+          {question.options.map((option, index) => (
+            <Button
+              key={index}
+              onClick={() => onAnswerSelect(index)}
+              variant="outline"
+              className="w-full h-auto p-4 text-left justify-start text-wrap bg-gradient-to-r from-white to-gray-50 hover:from-blue-50 hover:to-purple-50 border-gray-200 hover:border-purple-300 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center text-sm font-semibold text-gray-500">
+                  {String.fromCharCode(65 + index)}
+                </div>
+                <span className="text-gray-700 font-medium">{option}</span>
+              </div>
+            </Button>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+export default QuestionCard;
