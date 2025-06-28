@@ -43,7 +43,17 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
         .order('sequence_order');
 
       if (error) throw error;
-      setQuestions(data || []);
+      
+      // Transform the data to match our Question interface
+      const transformedQuestions: Question[] = (data || []).map(q => ({
+        id: q.id,
+        title: q.title,
+        subtitle: q.subtitle || '',
+        options: Array.isArray(q.options) ? q.options as string[] : [],
+        sequence_order: q.sequence_order
+      }));
+      
+      setQuestions(transformedQuestions);
     } catch (error: any) {
       console.error('Error loading questions:', error);
       toast({
