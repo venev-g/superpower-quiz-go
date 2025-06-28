@@ -12,45 +12,15 @@ import AdminUsers from '@/components/admin/AdminUsers';
 import AdminAnalytics from '@/components/admin/AdminAnalytics';
 
 const Admin = () => {
-  const { user, loading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, loading, isAdmin } = useAuth();
   const [checkingRole, setCheckingRole] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAdminRole();
-  }, [user]);
-
-  const checkAdminRole = async () => {
-    if (!user) {
-      setCheckingRole(false);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      setIsAdmin(!!data);
-    } catch (error: any) {
-      console.error('Error checking admin role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to verify admin access",
-        variant: "destructive",
-      });
-    } finally {
+    if (!loading) {
       setCheckingRole(false);
     }
-  };
+  }, [loading]);
 
   if (loading || checkingRole) {
     return (

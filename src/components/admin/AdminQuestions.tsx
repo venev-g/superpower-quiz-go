@@ -1,67 +1,73 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Edit, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Database } from '@/integrations/supabase/types';
 
-interface Question {
-  id: string;
-  title: string;
-  subtitle: string;
-  options: any;
-  sequence_order: number;
-  category_id: string;
-  question_type: string;
-  rating_min?: number;
-  rating_max?: number;
-  rating_labels?: string[];
-  is_active: boolean;
-}
-
-interface Category {
-  id: string;
-  name: string;
-}
+type Question = Database['public']['Tables']['questions']['Row'] & {
+  question_categories?: {
+    id: string;
+    name: string;
+    description: string | null;
+    color: string | null;
+  };
+};
+type QuestionCategory = Database['public']['Tables']['question_categories']['Row'];
 
 const AdminQuestions = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [categories, setCategories] = useState<QuestionCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadQuestions();
-    loadCategories();
-  }, []);
+  const [newQuestion, setNewQuestion] = useState({
+    title: '',
+    subtitle: '',
+    category_id: '',
+    is_active: true,
+    sequence_order: 0,
+    options: ['', '', '', ''] // Default 4 options
+  });
 
-  const loadQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('questions')
-        .select('*')
+        .select(`
+          *,
+          question_categories (
+            id,
+            name,
+            description,
+            color
+          )
+        `)
         .order('sequence_order');
 
       if (error) throw error;
       setQuestions(data || []);
-    } catch (error: any) {
-      console.error('Error loading questions:', error);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
       toast({
         title: "Error",
-        description: "Failed to load questions",
+        description: "Failed to fetch questions",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const loadCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('question_categories')
@@ -70,45 +76,100 @@ const AdminQuestions = () => {
 
       if (error) throw error;
       setCategories(data || []);
-    } catch (error: any) {
-      console.error('Error loading categories:', error);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch categories",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([fetchQuestions(), fetchCategories()]);
+      setLoading(false);
+    };
+    loadData();
+  }, [fetchQuestions, fetchCategories]);
+
+  const resetForm = () => {
+    setNewQuestion({
+      title: '',
+      subtitle: '',
+      category_id: '',
+      is_active: true,
+      sequence_order: 0,
+      options: ['', '', '', '']
+    });
+    setEditingId(null);
   };
 
-  const handleSaveQuestion = async (questionData: any) => {
+  const handleCreateQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+
     try {
-      if (editingQuestion) {
-        const { error } = await supabase
+      const questionData = {
+        title: newQuestion.title,
+        subtitle: newQuestion.subtitle || null,
+        category_id: newQuestion.category_id || null,
+        is_active: newQuestion.is_active,
+        sequence_order: newQuestion.sequence_order,
+        options: newQuestion.options.filter(opt => opt.trim())
+      };
+
+      let result;
+      if (editingId) {
+        result = await supabase
           .from('questions')
           .update(questionData)
-          .eq('id', editingQuestion.id);
-
-        if (error) throw error;
-        toast({ title: "Success", description: "Question updated successfully" });
+          .eq('id', editingId);
       } else {
-        const { error } = await supabase
+        result = await supabase
           .from('questions')
           .insert([questionData]);
-
-        if (error) throw error;
-        toast({ title: "Success", description: "Question created successfully" });
       }
 
-      loadQuestions();
-      setEditingQuestion(null);
-    } catch (error: any) {
+      if (result.error) throw result.error;
+
+      toast({
+        title: "Success",
+        description: editingId ? "Question updated successfully" : "Question created successfully",
+      });
+
+      await fetchQuestions();
+      resetForm();
+    } catch (error: unknown) {
       console.error('Error saving question:', error);
       toast({
         title: "Error",
-        description: "Failed to save question",
+        description: error instanceof Error ? error.message : "Failed to save question",
         variant: "destructive",
       });
+    } finally {
+      setCreating(false);
     }
   };
 
-  const handleDeleteQuestion = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this question?')) return;
+  const handleEdit = (question: Question) => {
+    setNewQuestion({
+      title: question.title,
+      subtitle: question.subtitle || '',
+      category_id: question.category_id || '',
+      is_active: question.is_active ?? true,
+      sequence_order: question.sequence_order || 0,
+      options: Array.isArray(question.options) ? 
+        (question.options as string[]).concat(['', '', '', '']).slice(0, 4) : 
+        ['', '', '', '']
+    });
+    setEditingId(question.id);
+  };
 
+  const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
         .from('questions')
@@ -116,268 +177,276 @@ const AdminQuestions = () => {
         .eq('id', id);
 
       if (error) throw error;
-      toast({ title: "Success", description: "Question deleted successfully" });
-      loadQuestions();
-    } catch (error: any) {
+
+      toast({
+        title: "Success",
+        description: "Question deleted successfully",
+      });
+
+      await fetchQuestions();
+    } catch (error: unknown) {
       console.error('Error deleting question:', error);
       toast({
         title: "Error",
-        description: "Failed to delete question",
+        description: error instanceof Error ? error.message : "Failed to delete question",
         variant: "destructive",
       });
     }
   };
 
+  const updateOption = (index: number, value: string) => {
+    setNewQuestion(prev => ({
+      ...prev,
+      options: prev.options.map((opt, i) => i === index ? value : opt)
+    }));
+  };
+
+  const addOption = () => {
+    setNewQuestion(prev => ({
+      ...prev,
+      options: [...prev.options, '']
+    }));
+  };
+
+  const removeOption = (index: number) => {
+    if (newQuestion.options.length > 2) {
+      setNewQuestion(prev => ({
+        ...prev,
+        options: prev.options.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
   if (loading) {
-    return <div className="text-center py-8">Loading questions...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center space-y-4">
+          <div className="text-4xl animate-spin">🔄</div>
+          <p className="text-gray-600">Loading questions...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Manage Questions</h2>
-        <Button onClick={() => setEditingQuestion({} as Question)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Question
-        </Button>
+        <div>
+          <h2 className="text-2xl font-bold">Questions Management</h2>
+          <p className="text-gray-600">Create and manage quiz questions</p>
+        </div>
       </div>
 
-      <div className="grid gap-4">
-        {questions.map((question) => (
-          <Card key={question.id} className="p-4">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="font-semibold">{question.title}</h3>
-                <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  Type: {question.question_type} | Order: {question.sequence_order} | 
-                  Active: {question.is_active ? 'Yes' : 'No'}
-                </p>
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingQuestion(question)}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDeleteQuestion(question.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <Tabs defaultValue="list" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="list">Questions List</TabsTrigger>
+          <TabsTrigger value="create">
+            {editingId ? 'Edit Question' : 'Create Question'}
+          </TabsTrigger>
+        </TabsList>
 
-      {editingQuestion && (
-        <QuestionForm
-          question={editingQuestion}
-          categories={categories}
-          onSave={handleSaveQuestion}
-          onCancel={() => setEditingQuestion(null)}
-        />
-      )}
-    </div>
-  );
-};
-
-interface QuestionFormProps {
-  question: Question;
-  categories: Category[];
-  onSave: (data: any) => void;
-  onCancel: () => void;
-}
-
-const QuestionForm: React.FC<QuestionFormProps> = ({ question, categories, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    title: question.title || '',
-    subtitle: question.subtitle || '',
-    question_type: question.question_type || 'single_choice',
-    category_id: question.category_id || '',
-    sequence_order: question.sequence_order || 1,
-    is_active: question.is_active ?? true,
-    options: Array.isArray(question.options) ? question.options : [],
-    rating_min: question.rating_min || 1,
-    rating_max: question.rating_max || 5,
-    rating_labels: question.rating_labels || []
-  });
-
-  const [optionText, setOptionText] = useState('');
-
-  const handleAddOption = () => {
-    if (optionText.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        options: [...prev.options, optionText.trim()]
-      }));
-      setOptionText('');
-    }
-  };
-
-  const handleRemoveOption = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      options: prev.options.filter((_: any, i: number) => i !== index)
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">
-        {question.id ? 'Edit Question' : 'Add New Question'}
-      </h3>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Title</label>
-          <Input
-            value={formData.title}
-            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Subtitle</label>
-          <Input
-            value={formData.subtitle}
-            onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Question Type</label>
-            <Select
-              value={formData.question_type}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, question_type: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="single_choice">Single Choice</SelectItem>
-                <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                <SelectItem value="rating_scale">Rating Scale</SelectItem>
-                <SelectItem value="multiselect">Multi-Select</SelectItem>
-              </SelectContent>
-            </Select>
+        <TabsContent value="list" className="space-y-4">
+          <div className="grid gap-4">
+            {questions.map((question) => (
+              <Card key={question.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <CardTitle className="text-base">{question.title}</CardTitle>
+                      {question.subtitle && (
+                        <CardDescription>{question.subtitle}</CardDescription>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Badge variant={question.is_active ? "default" : "secondary"}>
+                          {question.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                        <Badge variant="outline">Order: {question.sequence_order}</Badge>
+                        {question.question_categories && (
+                          <Badge 
+                            variant="outline"
+                            style={{ 
+                              backgroundColor: question.question_categories.color + '20',
+                              borderColor: question.question_categories.color || undefined
+                            }}
+                          >
+                            {question.question_categories.name}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(question)}
+                      >
+                        Edit
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the question.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(question.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardHeader>
+                {Array.isArray(question.options) && question.options.length > 0 && (
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Options:</Label>
+                      <div className="grid gap-1">
+                        {(question.options as string[]).map((option, index) => (
+                          <div key={index} className="text-sm p-2 bg-gray-50 rounded">
+                            {index + 1}. {option}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            ))}
           </div>
+        </TabsContent>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Category</label>
-            <Select
-              value={formData.category_id}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <TabsContent value="create">
+          <Card>
+            <CardHeader>
+              <CardTitle>{editingId ? 'Edit Question' : 'Create New Question'}</CardTitle>
+              <CardDescription>
+                {editingId ? 'Update the question details below' : 'Fill out the form below to create a new question'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCreateQuestion} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Question Title</Label>
+                    <Textarea
+                      id="title"
+                      value={newQuestion.title}
+                      onChange={(e) => setNewQuestion(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Enter the question text"
+                      required
+                      rows={3}
+                    />
+                  </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Sequence Order</label>
-            <Input
-              type="number"
-              value={formData.sequence_order}
-              onChange={(e) => setFormData(prev => ({ ...prev, sequence_order: parseInt(e.target.value) }))}
-              min="1"
-            />
-          </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subtitle">Subtitle (Optional)</Label>
+                    <Input
+                      id="subtitle"
+                      value={newQuestion.subtitle}
+                      onChange={(e) => setNewQuestion(prev => ({ ...prev, subtitle: e.target.value }))}
+                      placeholder="Question subtitle or category"
+                    />
+                  </div>
+                </div>
 
-          <div className="flex items-center space-x-2 pt-6">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-            />
-            <label htmlFor="is_active" className="text-sm font-medium">Active</label>
-          </div>
-        </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={newQuestion.category_id}
+                      onValueChange={(value) => setNewQuestion(prev => ({ ...prev, category_id: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-        {formData.question_type !== 'rating_scale' && (
-          <div>
-            <label className="block text-sm font-medium mb-1">Options</label>
-            <div className="space-y-2">
-              {formData.options.map((option: string, index: number) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <Input value={option} readOnly className="flex-1" />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRemoveOption(index)}
-                  >
-                    <Trash2 className="w-4 h-4" />
+                  <div className="space-y-2">
+                    <Label htmlFor="sequence_order">Order</Label>
+                    <Input
+                      id="sequence_order"
+                      type="number"
+                      value={newQuestion.sequence_order}
+                      onChange={(e) => setNewQuestion(prev => ({ ...prev, sequence_order: parseInt(e.target.value) || 0 }))}
+                      min="0"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Answer Options</Label>
+                  <div className="space-y-2">
+                    {newQuestion.options.map((option, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={option}
+                          onChange={(e) => updateOption(index, e.target.value)}
+                          placeholder={`Option ${index + 1}`}
+                        />
+                        {newQuestion.options.length > 2 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeOption(index)}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addOption}
+                      className="w-full"
+                    >
+                      Add Option
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_active"
+                    checked={newQuestion.is_active}
+                    onCheckedChange={(checked) => setNewQuestion(prev => ({ ...prev, is_active: checked }))}
+                  />
+                  <Label htmlFor="is_active">Active</Label>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button type="submit" disabled={creating}>
+                    {creating ? 'Saving...' : (editingId ? 'Update Question' : 'Create Question')}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    {editingId ? 'Cancel Edit' : 'Reset'}
                   </Button>
                 </div>
-              ))}
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="Add new option"
-                  value={optionText}
-                  onChange={(e) => setOptionText(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddOption())}
-                />
-                <Button type="button" onClick={handleAddOption}>Add</Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {formData.question_type === 'rating_scale' && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Min Rating</label>
-              <Input
-                type="number"
-                value={formData.rating_min}
-                onChange={(e) => setFormData(prev => ({ ...prev, rating_min: parseInt(e.target.value) }))}
-                min="1"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Max Rating</label>
-              <Input
-                type="number"
-                value={formData.rating_max}
-                onChange={(e) => setFormData(prev => ({ ...prev, rating_max: parseInt(e.target.value) }))}
-                min="2"
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="flex space-x-2 pt-4">
-          <Button type="submit">Save Question</Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </Card>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

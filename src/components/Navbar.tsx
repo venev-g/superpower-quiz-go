@@ -1,37 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 
 const Navbar = () => {
-  const { user, signOut } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    checkAdminRole();
-  }, [user]);
-
-  const checkAdminRole = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      setIsAdmin(!!data);
-    } catch (error: any) {
-      console.error('Error checking admin role:', error);
-    }
-  };
+  const { user, signOut, isAdmin } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-purple-100">

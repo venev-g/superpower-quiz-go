@@ -1,10 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import QuestionCard from './QuestionCard';
 import ProgressTracker from './ProgressTracker';
 import MotivationPopup from './MotivationPopup';
 import { useToast } from '@/hooks/use-toast';
+import { Database } from '@/integrations/supabase/types';
+import { useAuth } from '@/hooks/useAuth';
 
 interface QuizScreenProps {
   onComplete: (answers: number[]) => void;
@@ -12,7 +13,9 @@ interface QuizScreenProps {
   onProgressUpdate: (progress: number) => void;
 }
 
-interface Question {
+type Question = Database['public']['Tables']['questions']['Row'];
+
+interface QuestionForQuiz {
   id: string;
   title: string;
   subtitle: string;
@@ -21,40 +24,57 @@ interface Question {
 }
 
 const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgressUpdate }) => {
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<QuestionForQuiz[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [showMotivation, setShowMotivation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    loadQuestions();
-    createQuizSession();
-  }, []);
-
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     try {
+      if (!user) {
+        console.log('No authenticated user, skipping question load');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('questions')
         .select('*')
         .eq('is_active', true)
-        .order('sequence_order');
+        .order('sequence_order', { ascending: true });
 
       if (error) throw error;
       
-      // Transform the data to match our Question interface
-      const transformedQuestions: Question[] = (data || []).map(q => ({
-        id: q.id,
-        title: q.title,
-        subtitle: q.subtitle || '',
-        options: Array.isArray(q.options) ? q.options as string[] : [],
-        sequence_order: q.sequence_order
-      }));
+      // Transform the data to match our QuestionForQuiz interface
+      const transformedQuestions: QuestionForQuiz[] = (data || []).map(q => {
+        let options: string[] = [];
+        
+        if (Array.isArray(q.options)) {
+          // Handle both string arrays and object arrays
+          options = q.options.map((option) => {
+            if (typeof option === 'string') {
+              return option;
+            } else if (option && typeof option === 'object' && option !== null && 'text' in option) {
+              return String((option as { text: string }).text);
+            }
+            return String(option);
+          });
+        }
+        
+        return {
+          id: q.id,
+          title: q.title,
+          subtitle: q.subtitle || '',
+          options: options,
+          sequence_order: q.sequence_order || 0
+        };
+      });
       
       setQuestions(transformedQuestions);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading questions:', error);
       toast({
         title: "Error",
@@ -64,27 +84,34 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, user]);
 
-  const createQuizSession = async () => {
+  const createQuizSession = useCallback(async () => {
     try {
+      if (!user) {
+        console.log('No authenticated user, skipping session creation');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('quiz_sessions')
-        .insert([{
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          total_questions: 10
-        }])
-        .select()
+        .insert({
+          user_id: user.id,
+          total_questions: questions.length,
+          current_question: 0,
+          started_at: new Date().toISOString()
+        })
+        .select('id')
         .single();
 
       if (error) throw error;
       setSessionId(data.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating quiz session:', error);
     }
-  };
+  }, [user, questions.length]);
 
-  const updateQuizSession = async (newAnswers: number[], questionIndex: number) => {
+  const updateQuizSession = useCallback(async (newAnswers: number[], questionIndex: number) => {
     if (!sessionId) return;
 
     try {
@@ -95,10 +122,30 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
           answers: newAnswers
         })
         .eq('id', sessionId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating quiz session:', error);
     }
-  };
+  }, [sessionId]);
+
+  useEffect(() => {
+    const initializeQuiz = async () => {
+      // Wait for auth to finish loading and ensure user is authenticated
+      if (authLoading) {
+        return;
+      }
+      
+      if (!user) {
+        console.log('No authenticated user, skipping quiz initialization');
+        setLoading(false);
+        return;
+      }
+      
+      await loadQuestions();
+      await createQuizSession();
+    };
+    
+    initializeQuiz();
+  }, [loadQuestions, createQuizSession, user, authLoading]);
 
   const handleAnswerSelect = async (answerIndex: number) => {
     const newAnswers = [...answers, answerIndex];
@@ -124,12 +171,23 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
     setTimeout(() => setCurrentQuestion(5), 300);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="text-4xl animate-spin">🧠</div>
           <p className="text-gray-600">Loading questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-4xl">🔒</div>
+          <p className="text-gray-600">Please sign in to access the quiz.</p>
         </div>
       </div>
     );

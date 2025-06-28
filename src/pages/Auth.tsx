@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -15,6 +14,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,22 +22,30 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event, session);
+        console.log('User from session:', session?.user);
+        console.log('Session valid:', !!session);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          console.log('User logged in, redirecting...');
           setTimeout(() => {
             window.location.href = '/';
           }, 500);
+        } else {
+          console.log('No valid session found');
         }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('Initial session check:', { session, error });
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        console.log('Existing session found, redirecting...');
         window.location.href = '/';
       }
     });
@@ -73,10 +81,12 @@ const Auth = () => {
         title: "Account created!",
         description: "Check your email to verify your account.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Sign up failed:', err);
       toast({
         title: "Error",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     } finally {
@@ -89,16 +99,75 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting to sign in with:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
-    } catch (error: any) {
+      console.log('Sign in response:', { data, error });
+
+      if (error) {
+        console.error('Sign in error details:', error);
+        
+        // Handle specific error cases more gracefully
+        if (error.message.includes('Email not confirmed')) {
+          setShowResendConfirmation(true);
+          toast({
+            title: "Email Not Confirmed",
+            description: "Please check your email and click the confirmation link before signing in.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        throw error;
+      }
+
+      if (data?.user) {
+        console.log('User signed in successfully:', data.user);
+        toast({
+          title: "Success",
+          description: "Signed in successfully!",
+        });
+      }
+    } catch (error: unknown) {
+      const err = error as { message: string; code?: string };
+      console.error('Sign in failed:', err);
       toast({
         title: "Error",
-        description: error.message,
+        description: `${err.message} (Code: ${err.code || 'unknown'})`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Confirmation Email Sent",
+        description: "Please check your email for the confirmation link.",
+      });
+      setShowResendConfirmation(false);
+    } catch (error: unknown) {
+      const err = error as Error;
+      toast({
+        title: "Error",
+        description: err.message,
         variant: "destructive",
       });
     } finally {
@@ -187,6 +256,34 @@ const Auth = () => {
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
           </div>
+
+          {!isSignUp && (
+            <div className="text-center">
+              <button
+                onClick={() => {
+                  setEmail('admin@quiz.com');
+                  setPassword('admin123');
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                🔧 Fill Admin Credentials (for testing)
+              </button>
+            </div>
+          )}
+
+          {showResendConfirmation && (
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-2">
+                Didn't receive the confirmation email? Check your spam folder or
+                <button
+                  onClick={handleResendConfirmation}
+                  className="text-purple-600 hover:text-purple-700 font-medium ml-1"
+                >
+                  click here to resend
+                </button>.
+              </p>
+            </div>
+          )}
         </div>
       </Card>
     </div>

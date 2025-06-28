@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,7 @@ interface PersonalityResult {
   emoji: string;
   color: string;
   score: number;
+  traits?: string[];
 }
 
 const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, onRestart }) => {
@@ -24,11 +25,49 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, onRestart }) => 
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    calculateResult();
+  const saveResult = useCallback(async (personalityResult: PersonalityResult) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Create a quiz session first (if not already created)
+      const { data: session, error: sessionError } = await supabase
+        .from('quiz_sessions')
+        .insert([{
+          user_id: user.id,
+          completed_at: new Date().toISOString(),
+          current_question: answers.length,
+          total_questions: answers.length,
+          score: personalityResult.score,
+          result: { 
+            personality_type: personalityResult.title,
+            description: personalityResult.description,
+            traits: personalityResult.traits || []
+          },
+          answers: answers
+        }])
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      // Save the quiz result
+      await supabase
+        .from('quiz_results')
+        .insert([{
+          session_id: session.id,
+          user_id: user.id,
+          personality_type: personalityResult.title,
+          score: personalityResult.score,
+          answers: answers
+        }]);
+
+    } catch (error: unknown) {
+      console.error('Error saving result:', error);
+    }
   }, [answers]);
 
-  const calculateResult = async () => {
+  const calculateResult = useCallback(async () => {
     try {
       // Call edge function to calculate personality result
       const { data, error } = await supabase.functions.invoke('calculate-personality', {
@@ -47,7 +86,7 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, onRestart }) => 
       const timer = setTimeout(() => setShowConfetti(false), 3000);
       return () => clearTimeout(timer);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error calculating result:', error);
       toast({
         title: "Error",
@@ -66,27 +105,11 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, onRestart }) => 
     } finally {
       setLoading(false);
     }
-  };
+  }, [answers, toast, saveResult]);
 
-  const saveResult = async (personalityResult: PersonalityResult) => {
-    try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) return;
-
-      await supabase
-        .from('quiz_results')
-        .insert([{
-          user_id: user.id,
-          personality_type: personalityResult.title,
-          score: personalityResult.score,
-          answers: answers
-        }]);
-
-      // Analytics will be updated automatically by the trigger
-    } catch (error: any) {
-      console.error('Error saving result:', error);
-    }
-  };
+  useEffect(() => {
+    calculateResult();
+  }, [answers, calculateResult]);
 
   const handleRestart = () => {
     onRestart();
