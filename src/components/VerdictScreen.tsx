@@ -81,9 +81,19 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, onRestart }) => 
           score: personalityResult.score,
           answers: answers
         }]);
+
+      // Analytics will be updated automatically by the trigger
     } catch (error: any) {
       console.error('Error saving result:', error);
     }
+  };
+
+  const handleRestart = () => {
+    onRestart();
+  };
+
+  const handleViewDashboard = () => {
+    window.location.href = '/dashboard';
   };
 
   if (loading) {
@@ -158,7 +168,14 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, onRestart }) => 
       {/* Action Buttons */}
       <div className="w-full max-w-md space-y-2">
         <Button
-          onClick={onRestart}
+          onClick={handleViewDashboard}
+          className="w-full h-12 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+        >
+          View Dashboard 📊
+        </Button>
+        
+        <Button
+          onClick={handleRestart}
           className="w-full h-12 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
         >
           Take Another Quiz 🔄
