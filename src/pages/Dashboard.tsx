@@ -9,7 +9,7 @@ import Navbar from '@/components/Navbar';
 import { Trophy, Calendar, Target, BarChart3, Eye, Play, MessageSquare } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 import { MentorForm } from '@/components/MentorForm';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 
 type QuizSession = Database['public']['Tables']['quiz_sessions']['Row'];
 type QuizResult = Database['public']['Tables']['quiz_results']['Row'];
@@ -40,7 +40,10 @@ const Dashboard = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [selectedResult, setSelectedResult] = useState<UserResult | null>(null);
   const { toast } = useToast();
-  const [isMentorOpen, setIsMentorOpen] = useState(false);
+
+  const handleMentorClick = () => {
+    window.location.href = '/mentor';
+  };
 
   const loadUserData = useCallback(async () => {
     if (!user) return;
@@ -179,10 +182,6 @@ const Dashboard = () => {
                 <Button onClick={handleStartNewAssessment} className="flex items-center">
                   <Play className="w-4 h-4 mr-2" />
                   Start New Assessment
-                </Button>
-                <Button onClick={() => setIsMentorOpen(true)} variant="outline" className="ml-4 flex items-center">
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  AI Mentor
                 </Button>
               </div>
             </div>
@@ -379,19 +378,26 @@ const Dashboard = () => {
             </div>
           </div>
         )}
-        <Dialog open={isMentorOpen} onOpenChange={setIsMentorOpen}>
-          <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle>AI Mentor</DialogTitle>
-              <DialogDescription>
-                Your personal AI-powered tutor to help you with any topic.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex-grow overflow-auto">
-              <MentorForm onClose={() => setIsMentorOpen(false)} />
-            </div>
-          </DialogContent>
-        </Dialog>
+
+        {/* Mentor Avatar Floating Button */}
+        <div
+          className="fixed bottom-8 right-8 z-50 group flex flex-col items-end"
+          style={{ cursor: 'pointer' }}
+          onClick={handleMentorClick}
+        >
+          {/* Chat bubble - only visible on hover */}
+          <div className="mb-2 mr-2 px-4 py-2 rounded-2xl bg-white text-gray-900 shadow-lg text-base font-semibold relative opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+               style={{ maxWidth: '180px' }}>
+            Ask your mentor!
+            <span className="absolute left-1/2 -bottom-2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 shadow-md"></span>
+          </div>
+          <img
+            src="/images/mentor.png"
+            alt="Mentor"
+            className="mentor-avatar"
+            style={{ display: 'block' }}
+          />
+        </div>
       </div>
     </div>
   );

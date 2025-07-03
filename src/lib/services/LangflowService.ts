@@ -16,7 +16,7 @@ export interface Session {
 }
 
 export class LangflowService {
-  private static readonly API_URL = process.env.NEXT_PUBLIC_LANGFLOW_API_URL || "http://127.0.0.1:7860/api/v1/run/4177053d-460a-4d98-b9e8-c6b4d0222f75";
+  private static readonly API_URL = import.meta.env.VITE_LANGFLOW_API_URL || "http://127.0.0.1:7860/api/v1/run/4177053d-460a-4d98-b9e8-c6b4d0222f75";
   private static readonly SESSIONS_KEY = 'langflow_sessions';
   private static readonly MESSAGES_KEY = 'langflow_messages';
   private static readonly QUIZ_STATE_KEY = 'langflow_quiz_state';
@@ -164,7 +164,7 @@ export class LangflowService {
     try {
       // Debug: Log the API URL being used
       console.log('LangflowService: Using API URL:', this.API_URL);
-      console.log('LangflowService: Environment variable value:', process.env.NEXT_PUBLIC_LANGFLOW_API_URL);
+      console.log('LangflowService: Environment variable value:', import.meta.env.VITE_LANGFLOW_API_URL);
 
       const payload = {
         input_value: message,
@@ -656,4 +656,4 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
       console.error('Error deleting session quiz mode state:', error);
     }
   }
-} 
+}

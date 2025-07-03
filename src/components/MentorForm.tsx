@@ -746,7 +746,7 @@ Keep it concise and easy for a beginner.`;
               <button
                 type="button"
                 className="ml-4 px-3 py-1 rounded bg-white/20 hover:bg-white/40 text-white font-semibold text-sm transition"
-                onClick={() => setShowChat(false)}
+                onClick={() => window.location.href = '/dashboard'}
               >
                 Back
               </button>
@@ -1083,7 +1083,7 @@ Keep it concise and easy for a beginner.`;
         <button
           type="button"
           className="absolute top-4 left-4 px-4 py-2 rounded bg-white/80 hover:bg-white text-blue-700 font-semibold shadow z-20"
-          onClick={() => (onClose ? onClose() : window.history.back())}
+          onClick={() => window.location.href = '/dashboard'}
         >
           Back
         </button>
