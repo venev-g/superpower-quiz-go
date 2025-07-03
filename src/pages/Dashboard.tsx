@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import Navbar from '@/components/Navbar';
-import { Trophy, Calendar, Target, BarChart3, Eye, Play } from 'lucide-react';
+import { Trophy, Calendar, Target, BarChart3, Eye, Play, MessageSquare } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
+import { MentorForm } from '@/components/MentorForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type QuizSession = Database['public']['Tables']['quiz_sessions']['Row'];
 type QuizResult = Database['public']['Tables']['quiz_results']['Row'];
@@ -38,6 +40,7 @@ const Dashboard = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [selectedResult, setSelectedResult] = useState<UserResult | null>(null);
   const { toast } = useToast();
+  const [isMentorOpen, setIsMentorOpen] = useState(false);
 
   const loadUserData = useCallback(async () => {
     if (!user) return;
@@ -172,10 +175,16 @@ const Dashboard = () => {
                 </h1>
                 <p className="text-gray-600 mt-1">Track your assessment progress and results</p>
               </div>
-              <Button onClick={handleStartNewAssessment} className="flex items-center">
-                <Play className="w-4 h-4 mr-2" />
-                Start New Assessment
-              </Button>
+              <div className="flex items-center">
+                <Button onClick={handleStartNewAssessment} className="flex items-center">
+                  <Play className="w-4 h-4 mr-2" />
+                  Start New Assessment
+                </Button>
+                <Button onClick={() => setIsMentorOpen(true)} variant="outline" className="ml-4 flex items-center">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  AI Mentor
+                </Button>
+              </div>
             </div>
 
             {/* Analytics Cards */}
@@ -370,6 +379,19 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+        <Dialog open={isMentorOpen} onOpenChange={setIsMentorOpen}>
+          <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>AI Mentor</DialogTitle>
+              <DialogDescription>
+                Your personal AI-powered tutor to help you with any topic.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex-grow overflow-auto">
+              <MentorForm onClose={() => setIsMentorOpen(false)} />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

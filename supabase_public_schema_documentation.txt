@@ -1,0 +1,1133 @@
+===============================================================================
+                     SUPABASE DATABASE PUBLIC SCHEMA DOCUMENTATION
+                              Superpower Quiz Go Application
+===============================================================================
+
+Generated on: July 1, 2025
+Database URL: https://klhvompynehlixcztwru.supabase.co
+Project ID: superpower-quiz-go
+
+===============================================================================
+                                   OVERVIEW
+===============================================================================
+
+This document contains comprehensive information about all tables, columns, 
+relationships, indexes, functions, triggers, and enums in the public schema 
+of the Supabase database for the Superpower Quiz Go application.
+
+Total Tables: 16
+Total Functions: 3
+Total Triggers: 2
+Total Enums: 2
+Total Views: 0
+
+===============================================================================
+                               TABLE DEFINITIONS
+===============================================================================
+
+1. ASSESSMENT_RESULTS
+=====================
+Table ID: 17397
+Size: 32 kB (32768 bytes)
+Estimated Rows: 2
+RLS Enabled: true
+
+Description: Stores assessment results and scoring data for completed tests.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: uuid_generate_v4()
+  - Not Null: true
+  - Description: Unique identifier for assessment result
+
+• session_id (uuid)
+  - Nullable: true
+  - Foreign Key: → assessment_sessions.id
+  - Description: Links to the assessment session
+
+• test_type_id (uuid)
+  - Nullable: true
+  - Foreign Key: → test_types.id
+  - Description: Type of test that was taken
+
+• raw_scores (jsonb)
+  - Not Null: true
+  - Description: Raw scoring data in JSON format
+
+• processed_scores (jsonb)
+  - Not Null: true
+  - Description: Processed and calculated scores
+
+• recommendations (jsonb)
+  - Nullable: true
+  - Description: AI-generated recommendations based on results
+
+• percentile_ranks (jsonb)
+  - Nullable: true
+  - Description: Percentile ranking data
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Record creation timestamp
+
+INDEXES:
+--------
+• assessment_results_pkey (UNIQUE): btree (id)
+
+RELATIONSHIPS:
+--------------
+• session_id → assessment_sessions.id
+• test_type_id → test_types.id
+
+---
+
+2. ASSESSMENT_SESSIONS
+======================
+Table ID: 17354
+Size: 32 kB (32768 bytes)
+Estimated Rows: 16
+RLS Enabled: true
+
+Description: Manages assessment sessions and tracks progress through tests.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: uuid_generate_v4()
+  - Not Null: true
+  - Description: Unique session identifier
+
+• user_id (uuid)
+  - Nullable: true
+  - Foreign Key: → auth.users.id
+  - Description: User taking the assessment
+
+• configuration_id (uuid)
+  - Nullable: true
+  - Foreign Key: → test_configurations.id
+  - Description: Test configuration used
+
+• status (text)
+  - Default: 'started'
+  - Nullable: true
+  - Check: status IN ('started', 'in_progress', 'completed', 'abandoned')
+  - Description: Current session status
+
+• current_test_index (integer)
+  - Default: 0
+  - Nullable: true
+  - Description: Index of current test in sequence
+
+• total_tests (integer)
+  - Default: 0
+  - Nullable: true
+  - Description: Total number of tests in sequence
+
+• started_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Session start time
+
+• completed_at (timestamp with time zone)
+  - Nullable: true
+  - Description: Session completion time
+
+• metadata (jsonb)
+  - Default: '{}'
+  - Nullable: true
+  - Description: Additional session metadata
+
+INDEXES:
+--------
+• assessment_sessions_pkey (UNIQUE): btree (id)
+
+RELATIONSHIPS:
+--------------
+• user_id → auth.users.id
+• configuration_id → test_configurations.id
+• Referenced by: user_responses.session_id
+• Referenced by: assessment_results.session_id
+
+---
+
+3. PROFILES
+===========
+Table ID: 22309
+Size: 32 kB (32768 bytes)
+Estimated Rows: 1
+RLS Enabled: true
+
+Description: User profile information linked to auth users.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Not Null: true
+  - Foreign Key: → auth.users.id
+  - Description: User ID from auth system
+
+• username (text)
+  - Nullable: true
+  - Description: User's display name
+
+• avatar_url (text)
+  - Nullable: true
+  - Description: URL to user's avatar image
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Not Null: true
+  - Description: Profile creation timestamp
+
+• updated_at (timestamp with time zone)
+  - Default: now()
+  - Not Null: true
+  - Description: Last profile update timestamp
+
+INDEXES:
+--------
+• profiles_pkey (UNIQUE): btree (id)
+
+RELATIONSHIPS:
+--------------
+• id → auth.users.id
+
+---
+
+4. QUESTION_CATEGORIES
+======================
+Table ID: 22337
+Size: 48 kB (49152 bytes)
+Estimated Rows: 5
+RLS Enabled: true
+
+Description: Categories for organizing quiz questions.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: gen_random_uuid()
+  - Not Null: true
+  - Description: Unique category identifier
+
+• name (text, UNIQUE)
+  - Not Null: true
+  - Description: Category name
+
+• description (text)
+  - Nullable: true
+  - Description: Category description
+
+• color (text)
+  - Default: '#6366f1'
+  - Nullable: true
+  - Description: Category color for UI display
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Not Null: true
+  - Description: Category creation timestamp
+
+INDEXES:
+--------
+• question_categories_pkey (UNIQUE): btree (id)
+• question_categories_name_key (UNIQUE): btree (name)
+
+RELATIONSHIPS:
+--------------
+• Referenced by: questions.category_id
+
+---
+
+5. QUESTIONS
+============
+Table ID: 22349
+Size: 32 kB (32768 bytes)
+Estimated Rows: 10
+RLS Enabled: true
+
+Description: Current questions table for the quiz system.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: gen_random_uuid()
+  - Not Null: true
+  - Description: Unique question identifier
+
+• category_id (uuid)
+  - Nullable: true
+  - Foreign Key: → question_categories.id
+  - Description: Question category
+
+• title (text)
+  - Not Null: true
+  - Description: Question title/text
+
+• subtitle (text)
+  - Nullable: true
+  - Description: Optional question subtitle
+
+• options (jsonb)
+  - Not Null: true
+  - Description: Question options in JSON format
+
+• sequence_order (integer)
+  - Default: 0
+  - Not Null: true
+  - Description: Order of question in sequence
+
+• is_active (boolean)
+  - Default: true
+  - Not Null: true
+  - Description: Whether question is active
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Not Null: true
+  - Description: Question creation timestamp
+
+• updated_at (timestamp with time zone)
+  - Default: now()
+  - Not Null: true
+  - Description: Last question update timestamp
+
+INDEXES:
+--------
+• questions_pkey1 (UNIQUE): btree (id)
+
+RELATIONSHIPS:
+--------------
+• category_id → question_categories.id
+
+---
+
+6. QUESTIONS_OLD
+================
+Table ID: 17337
+Size: 88 kB (90112 bytes)
+Estimated Rows: 42
+RLS Enabled: false
+
+Description: Legacy questions table with extended functionality.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: uuid_generate_v4()
+  - Not Null: true
+  - Description: Unique question identifier
+
+• test_type_id (uuid)
+  - Nullable: true
+  - Foreign Key: → test_types.id
+  - Description: Associated test type
+
+• question_text (text)
+  - Not Null: true
+  - Description: Question text content
+
+• question_type (text)
+  - Not Null: true
+  - Check: question_type IN ('multiple_choice', 'rating_scale', 'yes_no', 'multiselect')
+  - Description: Type of question
+
+• options (jsonb)
+  - Nullable: true
+  - Description: Question options in JSON format
+
+• category (text)
+  - Nullable: true
+  - Description: Question category
+
+• subcategory (text)
+  - Nullable: true
+  - Description: Question subcategory
+
+• weight (numeric)
+  - Default: 1.0
+  - Nullable: true
+  - Description: Question weight for scoring
+
+• is_active (boolean)
+  - Default: true
+  - Nullable: true
+  - Description: Whether question is active
+
+• order_index (integer)
+  - Default: 0
+  - Nullable: true
+  - Description: Question order index
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Question creation timestamp
+
+• rating_min (integer)
+  - Default: 1
+  - Nullable: true
+  - Description: Minimum rating value
+
+• rating_max (integer)
+  - Default: 5
+  - Nullable: true
+  - Description: Maximum rating value
+
+• rating_labels (jsonb)
+  - Default: '[]'
+  - Nullable: true
+  - Description: Labels for rating scale
+
+INDEXES:
+--------
+• questions_pkey (UNIQUE): btree (id)
+
+RELATIONSHIPS:
+--------------
+• test_type_id → test_types.id
+• Referenced by: user_responses.question_id
+
+---
+
+7. QUIZ_ANALYTICS
+=================
+Table ID: 22202
+Size: 40 kB (40960 bytes)
+Estimated Rows: 3
+RLS Enabled: true
+
+Description: Analytics data for user quiz performance.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: gen_random_uuid()
+  - Not Null: true
+  - Description: Unique analytics record identifier
+
+• user_id (uuid, UNIQUE)
+  - Nullable: true
+  - Foreign Key: → auth.users.id
+  - Description: User ID for analytics
+
+• total_attempts (integer)
+  - Default: 0
+  - Nullable: true
+  - Description: Total quiz attempts by user
+
+• last_attempt_at (timestamp with time zone)
+  - Nullable: true
+  - Description: Timestamp of last attempt
+
+• average_score (numeric)
+  - Default: 0
+  - Nullable: true
+  - Description: User's average quiz score
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Record creation timestamp
+
+• updated_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Last record update timestamp
+
+INDEXES:
+--------
+• quiz_analytics_pkey (UNIQUE): btree (id)
+• quiz_analytics_user_id_key (UNIQUE): btree (user_id)
+
+RELATIONSHIPS:
+--------------
+• user_id → auth.users.id
+
+---
+
+8. QUIZ_RESULTS
+===============
+Table ID: 22384
+Size: 16 kB (16384 bytes)
+Estimated Rows: 0
+RLS Enabled: true
+
+Description: Stores results from completed quizzes.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: gen_random_uuid()
+  - Not Null: true
+  - Description: Unique result identifier
+
+• user_id (uuid)
+  - Nullable: true
+  - Foreign Key: → auth.users.id
+  - Description: User who took the quiz
+
+• session_id (uuid)
+  - Nullable: true
+  - Foreign Key: → quiz_sessions.id
+  - Description: Associated quiz session
+
+• personality_type (text)
+  - Not Null: true
+  - Description: Determined personality type
+
+• score (integer)
+  - Default: 0
+  - Not Null: true
+  - Description: Quiz score
+
+• answers (jsonb)
+  - Not Null: true
+  - Description: User's answers in JSON format
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Not Null: true
+  - Description: Result creation timestamp
+
+INDEXES:
+--------
+• quiz_results_pkey (UNIQUE): btree (id)
+
+RELATIONSHIPS:
+--------------
+• user_id → auth.users.id
+• session_id → quiz_sessions.id
+
+---
+
+9. QUIZ_SESSIONS
+================
+Table ID: 22366
+Size: 16 kB (16384 bytes)
+Estimated Rows: 0
+RLS Enabled: true
+
+Description: Manages active quiz sessions.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: gen_random_uuid()
+  - Not Null: true
+  - Description: Unique session identifier
+
+• user_id (uuid)
+  - Nullable: true
+  - Foreign Key: → auth.users.id
+  - Description: User taking the quiz
+
+• started_at (timestamp with time zone)
+  - Default: now()
+  - Not Null: true
+  - Description: Session start time
+
+• completed_at (timestamp with time zone)
+  - Nullable: true
+  - Description: Session completion time
+
+• current_question (integer)
+  - Default: 1
+  - Nullable: true
+  - Description: Current question number
+
+• total_questions (integer)
+  - Default: 10
+  - Nullable: true
+  - Description: Total questions in quiz
+
+• answers (jsonb)
+  - Default: '[]'
+  - Nullable: true
+  - Description: User's answers so far
+
+• result (jsonb)
+  - Nullable: true
+  - Description: Quiz result data
+
+• score (integer)
+  - Default: 0
+  - Nullable: true
+  - Description: Current quiz score
+
+INDEXES:
+--------
+• quiz_sessions_pkey (UNIQUE): btree (id)
+
+RELATIONSHIPS:
+--------------
+• user_id → auth.users.id
+• Referenced by: quiz_results.session_id
+
+---
+
+10. TEST_CONFIGURATIONS
+=======================
+Table ID: 17284
+Size: 32 kB (32768 bytes)
+Estimated Rows: 2
+RLS Enabled: false
+
+Description: Configuration settings for different test types.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: uuid_generate_v4()
+  - Not Null: true
+  - Description: Unique configuration identifier
+
+• name (text)
+  - Not Null: true
+  - Description: Configuration name
+
+• description (text)
+  - Nullable: true
+  - Description: Configuration description
+
+• is_active (boolean)
+  - Default: true
+  - Nullable: true
+  - Description: Whether configuration is active
+
+• max_attempts (integer)
+  - Default: 1
+  - Nullable: true
+  - Description: Maximum allowed attempts
+
+• time_limit_minutes (integer)
+  - Nullable: true
+  - Description: Time limit in minutes
+
+• created_by (uuid)
+  - Nullable: true
+  - Foreign Key: → auth.users.id
+  - Description: User who created the configuration
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Configuration creation timestamp
+
+• updated_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Last configuration update timestamp
+
+INDEXES:
+--------
+• test_configurations_pkey (UNIQUE): btree (id)
+
+TRIGGERS:
+---------
+• update_test_configurations_updated_at (BEFORE UPDATE)
+  - Executes: handle_updated_at()
+
+RELATIONSHIPS:
+--------------
+• created_by → auth.users.id
+• Referenced by: test_sequences.configuration_id
+• Referenced by: assessment_sessions.configuration_id
+
+---
+
+11. TEST_SEQUENCES
+==================
+Table ID: 17317
+Size: 40 kB (40960 bytes)
+Estimated Rows: 5
+RLS Enabled: false
+
+Description: Defines sequences of tests within configurations.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: uuid_generate_v4()
+  - Not Null: true
+  - Description: Unique sequence identifier
+
+• configuration_id (uuid)
+  - Nullable: true
+  - Foreign Key: → test_configurations.id
+  - Description: Associated configuration
+
+• test_type_id (uuid)
+  - Nullable: true
+  - Foreign Key: → test_types.id
+  - Description: Type of test in sequence
+
+• sequence_order (integer)
+  - Not Null: true
+  - Description: Order of test in sequence
+
+• is_required (boolean)
+  - Default: true
+  - Nullable: true
+  - Description: Whether test is required
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Sequence creation timestamp
+
+INDEXES:
+--------
+• test_sequences_pkey (UNIQUE): btree (id)
+• test_sequences_configuration_id_sequence_order_key (UNIQUE): btree (configuration_id, sequence_order)
+
+RELATIONSHIPS:
+--------------
+• configuration_id → test_configurations.id
+• test_type_id → test_types.id
+
+---
+
+12. TEST_TYPES
+==============
+Table ID: 17301
+Size: 64 kB (65536 bytes)
+Estimated Rows: 5
+RLS Enabled: true
+
+Description: Defines different types of tests/assessments.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: uuid_generate_v4()
+  - Not Null: true
+  - Description: Unique test type identifier
+
+• name (text, UNIQUE)
+  - Not Null: true
+  - Description: Test type name
+
+• slug (text, UNIQUE)
+  - Not Null: true
+  - Description: URL-friendly identifier
+
+• description (text)
+  - Nullable: true
+  - Description: Test type description
+
+• version (text)
+  - Default: '1.0'
+  - Nullable: true
+  - Description: Test type version
+
+• is_active (boolean)
+  - Default: true
+  - Nullable: true
+  - Description: Whether test type is active
+
+• scoring_algorithm (jsonb)
+  - Nullable: true
+  - Description: Scoring algorithm configuration
+
+• instructions (text)
+  - Nullable: true
+  - Description: Test instructions for users
+
+• estimated_duration_minutes (integer)
+  - Default: 15
+  - Nullable: true
+  - Description: Estimated completion time
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Test type creation timestamp
+
+INDEXES:
+--------
+• test_types_pkey (UNIQUE): btree (id)
+• test_types_name_key (UNIQUE): btree (name)
+• test_types_slug_key (UNIQUE): btree (slug)
+
+RELATIONSHIPS:
+--------------
+• Referenced by: test_sequences.test_type_id
+• Referenced by: questions_old.test_type_id
+• Referenced by: assessment_results.test_type_id
+
+---
+
+13. USER_PROFILES
+=================
+Table ID: 17268
+Size: 32 kB (32768 bytes)
+Estimated Rows: 4
+RLS Enabled: true
+
+Description: Extended user profile information.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Not Null: true
+  - Foreign Key: → auth.users.id
+  - Description: User ID from auth system
+
+• full_name (text)
+  - Nullable: true
+  - Description: User's full name
+
+• avatar_url (text)
+  - Nullable: true
+  - Description: URL to user's avatar
+
+• role (text)
+  - Default: 'user'
+  - Nullable: true
+  - Check: role IN ('user', 'admin')
+  - Description: User role
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Profile creation timestamp
+
+• updated_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Last profile update timestamp
+
+INDEXES:
+--------
+• user_profiles_pkey (UNIQUE): btree (id)
+
+TRIGGERS:
+---------
+• update_user_profiles_updated_at (BEFORE UPDATE)
+  - Executes: handle_updated_at()
+
+RELATIONSHIPS:
+--------------
+• id → auth.users.id
+
+---
+
+14. USER_RESPONSES
+==================
+Table ID: 17378
+Size: 32 kB (32768 bytes)
+Estimated Rows: 22
+RLS Enabled: true
+
+Description: Stores individual user responses to questions.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: uuid_generate_v4()
+  - Not Null: true
+  - Description: Unique response identifier
+
+• session_id (uuid)
+  - Nullable: true
+  - Foreign Key: → assessment_sessions.id
+  - Description: Associated assessment session
+
+• question_id (uuid)
+  - Nullable: true
+  - Foreign Key: → questions_old.id
+  - Description: Question that was answered
+
+• response_value (jsonb)
+  - Not Null: true
+  - Description: User's response in JSON format
+
+• response_time_ms (integer)
+  - Nullable: true
+  - Description: Time taken to respond in milliseconds
+
+• created_at (timestamp with time zone)
+  - Default: now()
+  - Nullable: true
+  - Description: Response creation timestamp
+
+INDEXES:
+--------
+• user_responses_pkey (UNIQUE): btree (id)
+
+RELATIONSHIPS:
+--------------
+• session_id → assessment_sessions.id
+• question_id → questions_old.id
+
+---
+
+15. USER_ROLES
+==============
+Table ID: 22323
+Size: 40 kB (40960 bytes)
+Estimated Rows: 1
+RLS Enabled: true
+
+Description: User role assignments using enum type.
+
+COLUMNS:
+--------
+• id (uuid, PRIMARY KEY)
+  - Default: gen_random_uuid()
+  - Not Null: true
+  - Description: Unique role assignment identifier
+
+• user_id (uuid)
+  - Not Null: true
+  - Foreign Key: → auth.users.id
+  - Description: User being assigned role
+
+• role (app_role enum)
+  - Default: 'user'
+  - Not Null: true
+  - Values: ['admin', 'user']
+  - Description: Assigned role
+
+INDEXES:
+--------
+• user_roles_pkey (UNIQUE): btree (id)
+• user_roles_user_id_role_key (UNIQUE): btree (user_id, role)
+
+RELATIONSHIPS:
+--------------
+• user_id → auth.users.id
+
+===============================================================================
+                               ENUM DEFINITIONS
+===============================================================================
+
+1. APP_ROLE
+===========
+Description: Defines application roles for users
+Values:
+  - admin (sort order: 1)
+  - user (sort order: 2)
+
+2. QUESTION_TYPE
+================
+Description: Defines types of questions in the system
+Values:
+  - multiple_choice (sort order: 1)
+  - single_choice (sort order: 2)
+  - rating_scale (sort order: 3)
+  - multiselect (sort order: 4)
+
+===============================================================================
+                              FUNCTION DEFINITIONS
+===============================================================================
+
+1. HANDLE_NEW_USER()
+====================
+Type: FUNCTION (Trigger)
+Return Type: trigger
+
+Description: Automatically creates user profile when new user is created in auth.
+
+Definition:
+```sql
+BEGIN
+  INSERT INTO public.user_profiles (id, full_name, role)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'username', 'New User'),
+    'user'
+  );
+  RETURN NEW;
+END;
+```
+
+2. HANDLE_UPDATED_AT()
+======================
+Type: FUNCTION (Trigger)
+Return Type: trigger
+
+Description: Automatically updates the updated_at timestamp on record updates.
+
+Definition:
+```sql
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+```
+
+3. HAS_ROLE(_user_id uuid, _role app_role)
+==========================================
+Type: FUNCTION
+Return Type: boolean
+
+Description: Checks if a user has a specific role.
+
+Definition:
+```sql
+SELECT EXISTS (
+  SELECT 1
+  FROM public.user_roles
+  WHERE user_id = _user_id
+    AND role = _role
+)
+```
+
+===============================================================================
+                               TRIGGER DEFINITIONS
+===============================================================================
+
+1. UPDATE_TEST_CONFIGURATIONS_UPDATED_AT
+=========================================
+Table: test_configurations
+Event: UPDATE
+Timing: BEFORE
+Action: EXECUTE FUNCTION handle_updated_at()
+
+Description: Updates the updated_at timestamp when test_configurations are modified.
+
+2. UPDATE_USER_PROFILES_UPDATED_AT
+==================================
+Table: user_profiles
+Event: UPDATE
+Timing: BEFORE
+Action: EXECUTE FUNCTION handle_updated_at()
+
+Description: Updates the updated_at timestamp when user_profiles are modified.
+
+===============================================================================
+                           FOREIGN KEY RELATIONSHIPS
+===============================================================================
+
+TABLE RELATIONSHIPS SUMMARY:
+
+1. AUTH.USERS (External) is referenced by:
+   - assessment_sessions.user_id
+   - quiz_analytics.user_id
+   - quiz_results.user_id
+   - quiz_sessions.user_id
+   - test_configurations.created_by
+   - profiles.id
+   - user_profiles.id
+   - user_roles.user_id
+
+2. ASSESSMENT_SESSIONS references:
+   - auth.users.id (via user_id)
+   - test_configurations.id (via configuration_id)
+   And is referenced by:
+   - user_responses.session_id
+   - assessment_results.session_id
+
+3. QUESTION_CATEGORIES is referenced by:
+   - questions.category_id
+
+4. QUESTIONS_OLD references:
+   - test_types.id (via test_type_id)
+   And is referenced by:
+   - user_responses.question_id
+
+5. QUIZ_SESSIONS references:
+   - auth.users.id (via user_id)
+   And is referenced by:
+   - quiz_results.session_id
+
+6. TEST_CONFIGURATIONS references:
+   - auth.users.id (via created_by)
+   And is referenced by:
+   - test_sequences.configuration_id
+   - assessment_sessions.configuration_id
+
+7. TEST_SEQUENCES references:
+   - test_configurations.id (via configuration_id)
+   - test_types.id (via test_type_id)
+
+8. TEST_TYPES is referenced by:
+   - test_sequences.test_type_id
+   - questions_old.test_type_id
+   - assessment_results.test_type_id
+
+===============================================================================
+                              ROW LEVEL SECURITY (RLS)
+===============================================================================
+
+Tables with RLS ENABLED:
+- assessment_results
+- assessment_sessions
+- profiles
+- question_categories
+- questions
+- quiz_analytics
+- quiz_results
+- quiz_sessions
+- test_types
+- user_profiles
+- user_responses
+- user_roles
+
+Tables with RLS DISABLED:
+- questions_old
+- test_configurations
+- test_sequences
+
+===============================================================================
+                                  STORAGE SUMMARY
+===============================================================================
+
+Total Database Size: ~400 kB across all tables
+
+Largest Tables:
+1. questions_old: 88 kB (42 estimated rows)
+2. test_types: 64 kB (5 estimated rows)
+3. question_categories: 48 kB (5 estimated rows)
+4. quiz_analytics: 40 kB (3 estimated rows)
+5. test_sequences: 40 kB (5 estimated rows)
+6. user_roles: 40 kB (1 estimated row)
+
+===============================================================================
+                               MIGRATION HISTORY
+===============================================================================
+
+The database has been created through multiple migrations:
+- 20250628082741-99974823-fcbd-49c2-b2e1-497968ce3065.sql
+- 20250628120000_enhanced_admin_features.sql
+- 20250628125000_fix_database_issues.sql
+
+===============================================================================
+                                   NOTES
+===============================================================================
+
+1. The database uses two question tables:
+   - `questions`: Current/active questions table
+   - `questions_old`: Legacy questions with more features
+
+2. User authentication is handled by Supabase Auth, with profile extensions
+   in both `profiles` and `user_profiles` tables.
+
+3. The system supports both quiz sessions and assessment sessions for
+   different types of testing workflows.
+
+4. Role-based access control is implemented through the `user_roles` table
+   using the `app_role` enum.
+
+5. All timestamps use 'timestamp with time zone' for proper timezone handling.
+
+6. JSON/JSONB columns are used extensively for flexible data storage:
+   - Question options and answers
+   - Assessment results and scores
+   - Session metadata
+   - Scoring algorithms
+
+7. The database is designed to support multiple test types and configurations,
+   making it scalable for different assessment needs.
+
+===============================================================================
+                                END OF DOCUMENT
+===============================================================================
+
+Generated by: Supabase Database Documentation Generator
+Contact: Generated automatically from database schema
+Last Updated: July 1, 2025
