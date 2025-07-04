@@ -793,7 +793,7 @@ Keep it concise and easy for a beginner.`;
               {isManualTextInputEnabled && (
                 <span className="text-white/90 text-xs sm:text-sm font-medium bg-green-500/20 px-2 py-1 rounded-full flex items-center gap-1">
                   <MessageSquare className="w-3 h-3" />
-                  Manual Mode
+                  Keyboard Mode
                 </span>
               )}
               <button
@@ -1071,7 +1071,7 @@ Keep it concise and easy for a beginner.`;
                         ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg' 
                         : 'bg-gray-200 hover:bg-gray-300 text-gray-600'
                     }`}
-                    title={isManualTextInputEnabled ? 'Disable manual text input' : 'Enable manual text input (bypass button restrictions)'}
+                    title={isManualTextInputEnabled ? 'Disable keyboard mode' : 'Enable keyboard mode (bypass button restrictions)'}
                   >
                     {isManualTextInputEnabled ? (
                       <MessageSquareOff className="w-5 h-5" />
@@ -1080,7 +1080,7 @@ Keep it concise and easy for a beginner.`;
                     )}
                     {/* Tooltip */}
                     <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                      {isManualTextInputEnabled ? 'Disable manual mode' : 'Enable manual mode'}
+                      {isManualTextInputEnabled ? 'Disable keyboard mode' : 'Enable keyboard mode'}
                     </span>
                   </button>
                   {/* Attachment button (future) */}
@@ -1097,7 +1097,7 @@ Keep it concise and easy for a beginner.`;
                         : !isTextInputEnabled && !isManualTextInputEnabled
                           ? "Use the buttons above to continue..." 
                           : isManualTextInputEnabled
-                            ? "Manual mode: Type your message..."
+                            ? "Keyboard mode: Type your message..."
                             : "Type your message..."
                     }
                     rows={1}

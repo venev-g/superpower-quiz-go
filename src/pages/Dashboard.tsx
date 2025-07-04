@@ -381,12 +381,12 @@ const Dashboard = () => {
 
         {/* Mentor Avatar Floating Button */}
         <div
-          className="fixed bottom-8 right-8 z-50 group flex flex-col items-end"
+          className="fixed bottom-8 right-8 z-50 group flex flex-col items-center"
           style={{ cursor: 'pointer' }}
           onClick={handleMentorClick}
         >
           {/* Chat bubble - only visible on hover */}
-          <div className="mb-2 mr-2 px-4 py-2 rounded-2xl bg-white text-gray-900 shadow-lg text-base font-semibold relative opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          <div className="mb-2 px-4 py-2 rounded-2xl bg-white text-gray-900 shadow-lg text-base font-semibold relative opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                style={{ maxWidth: '180px' }}>
             Ask your mentor!
             <span className="absolute left-1/2 -bottom-2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 shadow-md"></span>

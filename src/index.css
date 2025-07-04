@@ -127,7 +127,7 @@
 
 /* Mentor avatar: responsive, high-quality */
 .mentor-avatar {
-  width: 120px;
+  width: 90px; /* Reduced from 120px (approximately 1.5cm smaller) */
   height: auto; /* Let height adjust to maintain aspect ratio */
   transition: transform 0.3s ease-in-out;
   animation: float-subtle 6s ease-in-out infinite;
@@ -149,14 +149,30 @@
   }
 }
 
-@media (max-width: 768px) {
+/* Large screens (1200px and up) */
+@media (min-width: 1200px) {
   .mentor-avatar {
-    width: 100px;
+    width: 70px; /* Reduced from 100px (approximately 1.5cm smaller) */
   }
 }
 
-@media (max-width: 480px) {
+/* Medium screens (768px to 1199px) */
+@media (min-width: 768px) and (max-width: 1199px) {
   .mentor-avatar {
-    width: 80px;
+    width: 65px; /* Reduced from 90px (approximately 1.5cm smaller) */
+  }
+}
+
+/* Small screens (480px to 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+  .mentor-avatar {
+    width: 75px;
+  }
+}
+
+/* Extra small screens (below 480px) */
+@media (max-width: 479px) {
+  .mentor-avatar {
+    width: 60px;
   }
 }
