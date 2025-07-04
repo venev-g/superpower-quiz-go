@@ -22,6 +22,11 @@ export class LangflowService {
   private static readonly QUIZ_STATE_KEY = 'langflow_quiz_state';
   private static readonly FIVE_YEAR_OLD_STATE_KEY = 'langflow_five_year_old_state';
   private static readonly QUIZ_MODE_STATE_KEY = 'langflow_quiz_mode_state';
+  private static readonly FIRST_REPLY_STATE_KEY = 'langflow_first_reply_state';
+  private static readonly DIFFERENT_APPROACH_STATE_KEY = 'langflow_different_approach_state';
+  private static readonly AUTO_QUIZ_STATE_KEY = 'langflow_auto_quiz_state';
+  private static readonly TEXT_INPUT_STATE_KEY = 'langflow_text_input_state';
+  private static readonly MANUAL_INPUT_STATE_KEY = 'langflow_manual_input_state';
   
   // Get all sessions from localStorage
   static getSessions(): Session[] {
@@ -153,6 +158,11 @@ export class LangflowService {
     this.deleteSessionQuizState(sessionId);
     this.deleteSessionFiveYearOldState(sessionId);
     this.deleteSessionQuizModeState(sessionId);
+    this.deleteSessionFirstReplyState(sessionId);
+    this.deleteSessionDifferentApproachState(sessionId);
+    this.deleteSessionAutoQuizState(sessionId);
+    this.deleteSessionTextInputState(sessionId);
+    this.deleteSessionManualInputState(sessionId);
   }
 
   // Get session by ID
@@ -654,6 +664,201 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
       }
     } catch (error) {
       console.error('Error deleting session quiz mode state:', error);
+    }
+  }
+
+  // First Reply State Management
+  static getSessionFirstReplyState(sessionId: string): { firstReplyAwaitingYesNo: boolean } {
+    if (typeof window === 'undefined') return { firstReplyAwaitingYesNo: false };
+    try {
+      const allFirstReplyState = localStorage.getItem(this.FIRST_REPLY_STATE_KEY);
+      const firstReplyState = allFirstReplyState ? JSON.parse(allFirstReplyState) : {};
+      return firstReplyState[sessionId] || { firstReplyAwaitingYesNo: false };
+    } catch (error) {
+      console.error('Error loading session first reply state:', error);
+      return { firstReplyAwaitingYesNo: false };
+    }
+  }
+
+  static saveSessionFirstReplyState(sessionId: string, state: { firstReplyAwaitingYesNo: boolean }): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allFirstReplyState = localStorage.getItem(this.FIRST_REPLY_STATE_KEY);
+      const firstReplyStateObj = allFirstReplyState ? JSON.parse(allFirstReplyState) : {};
+      firstReplyStateObj[sessionId] = state;
+      localStorage.setItem(this.FIRST_REPLY_STATE_KEY, JSON.stringify(firstReplyStateObj));
+    } catch (error) {
+      console.error('Error saving session first reply state:', error);
+    }
+  }
+
+  static deleteSessionFirstReplyState(sessionId: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allFirstReplyState = localStorage.getItem(this.FIRST_REPLY_STATE_KEY);
+      if (allFirstReplyState) {
+        const firstReplyStateObj = JSON.parse(allFirstReplyState);
+        delete firstReplyStateObj[sessionId];
+        localStorage.setItem(this.FIRST_REPLY_STATE_KEY, JSON.stringify(firstReplyStateObj));
+      }
+    } catch (error) {
+      console.error('Error deleting session first reply state:', error);
+    }
+  }
+
+  // Different Approach State Management
+  static getSessionDifferentApproachState(sessionId: string): { useDifferentApproachMode: boolean } {
+    if (typeof window === 'undefined') return { useDifferentApproachMode: false };
+    try {
+      const allDifferentApproachState = localStorage.getItem(this.DIFFERENT_APPROACH_STATE_KEY);
+      const differentApproachState = allDifferentApproachState ? JSON.parse(allDifferentApproachState) : {};
+      return differentApproachState[sessionId] || { useDifferentApproachMode: false };
+    } catch (error) {
+      console.error('Error loading session different approach state:', error);
+      return { useDifferentApproachMode: false };
+    }
+  }
+
+  static saveSessionDifferentApproachState(sessionId: string, state: { useDifferentApproachMode: boolean }): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allDifferentApproachState = localStorage.getItem(this.DIFFERENT_APPROACH_STATE_KEY);
+      const differentApproachStateObj = allDifferentApproachState ? JSON.parse(allDifferentApproachState) : {};
+      differentApproachStateObj[sessionId] = state;
+      localStorage.setItem(this.DIFFERENT_APPROACH_STATE_KEY, JSON.stringify(differentApproachStateObj));
+    } catch (error) {
+      console.error('Error saving session different approach state:', error);
+    }
+  }
+
+  static deleteSessionDifferentApproachState(sessionId: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allDifferentApproachState = localStorage.getItem(this.DIFFERENT_APPROACH_STATE_KEY);
+      if (allDifferentApproachState) {
+        const differentApproachStateObj = JSON.parse(allDifferentApproachState);
+        delete differentApproachStateObj[sessionId];
+        localStorage.setItem(this.DIFFERENT_APPROACH_STATE_KEY, JSON.stringify(differentApproachStateObj));
+      }
+    } catch (error) {
+      console.error('Error deleting session different approach state:', error);
+    }
+  }
+
+  // Auto Quiz State Management
+  static getSessionAutoQuizState(sessionId: string): { autoQuizActive: boolean, autoQuizCount: number, pendingAutoQuiz: boolean } {
+    if (typeof window === 'undefined') return { autoQuizActive: false, autoQuizCount: 0, pendingAutoQuiz: false };
+    try {
+      const allAutoQuizState = localStorage.getItem(this.AUTO_QUIZ_STATE_KEY);
+      const autoQuizState = allAutoQuizState ? JSON.parse(allAutoQuizState) : {};
+      return autoQuizState[sessionId] || { autoQuizActive: false, autoQuizCount: 0, pendingAutoQuiz: false };
+    } catch (error) {
+      console.error('Error loading session auto quiz state:', error);
+      return { autoQuizActive: false, autoQuizCount: 0, pendingAutoQuiz: false };
+    }
+  }
+
+  static saveSessionAutoQuizState(sessionId: string, state: { autoQuizActive: boolean, autoQuizCount: number, pendingAutoQuiz: boolean }): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allAutoQuizState = localStorage.getItem(this.AUTO_QUIZ_STATE_KEY);
+      const autoQuizStateObj = allAutoQuizState ? JSON.parse(allAutoQuizState) : {};
+      autoQuizStateObj[sessionId] = state;
+      localStorage.setItem(this.AUTO_QUIZ_STATE_KEY, JSON.stringify(autoQuizStateObj));
+    } catch (error) {
+      console.error('Error saving session auto quiz state:', error);
+    }
+  }
+
+  static deleteSessionAutoQuizState(sessionId: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allAutoQuizState = localStorage.getItem(this.AUTO_QUIZ_STATE_KEY);
+      if (allAutoQuizState) {
+        const autoQuizStateObj = JSON.parse(allAutoQuizState);
+        delete autoQuizStateObj[sessionId];
+        localStorage.setItem(this.AUTO_QUIZ_STATE_KEY, JSON.stringify(autoQuizStateObj));
+      }
+    } catch (error) {
+      console.error('Error deleting session auto quiz state:', error);
+    }
+  }
+
+  // Text Input State Management
+  static getSessionTextInputState(sessionId: string): { isTextInputEnabled: boolean } {
+    if (typeof window === 'undefined') return { isTextInputEnabled: false };
+    try {
+      const allTextInputState = localStorage.getItem(this.TEXT_INPUT_STATE_KEY);
+      const textInputState = allTextInputState ? JSON.parse(allTextInputState) : {};
+      return textInputState[sessionId] || { isTextInputEnabled: false };
+    } catch (error) {
+      console.error('Error loading session text input state:', error);
+      return { isTextInputEnabled: false };
+    }
+  }
+
+  static saveSessionTextInputState(sessionId: string, state: { isTextInputEnabled: boolean }): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allTextInputState = localStorage.getItem(this.TEXT_INPUT_STATE_KEY);
+      const textInputStateObj = allTextInputState ? JSON.parse(allTextInputState) : {};
+      textInputStateObj[sessionId] = state;
+      localStorage.setItem(this.TEXT_INPUT_STATE_KEY, JSON.stringify(textInputStateObj));
+    } catch (error) {
+      console.error('Error saving session text input state:', error);
+    }
+  }
+
+  static deleteSessionTextInputState(sessionId: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allTextInputState = localStorage.getItem(this.TEXT_INPUT_STATE_KEY);
+      if (allTextInputState) {
+        const textInputStateObj = JSON.parse(allTextInputState);
+        delete textInputStateObj[sessionId];
+        localStorage.setItem(this.TEXT_INPUT_STATE_KEY, JSON.stringify(textInputStateObj));
+      }
+    } catch (error) {
+      console.error('Error deleting session text input state:', error);
+    }
+  }
+
+  // Manual Input State Management
+  static getSessionManualInputState(sessionId: string): { isManualTextInputEnabled: boolean } {
+    if (typeof window === 'undefined') return { isManualTextInputEnabled: false };
+    try {
+      const allManualInputState = localStorage.getItem(this.MANUAL_INPUT_STATE_KEY);
+      const manualInputState = allManualInputState ? JSON.parse(allManualInputState) : {};
+      return manualInputState[sessionId] || { isManualTextInputEnabled: false };
+    } catch (error) {
+      console.error('Error loading session manual input state:', error);
+      return { isManualTextInputEnabled: false };
+    }
+  }
+
+  static saveSessionManualInputState(sessionId: string, state: { isManualTextInputEnabled: boolean }): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allManualInputState = localStorage.getItem(this.MANUAL_INPUT_STATE_KEY);
+      const manualInputStateObj = allManualInputState ? JSON.parse(allManualInputState) : {};
+      manualInputStateObj[sessionId] = state;
+      localStorage.setItem(this.MANUAL_INPUT_STATE_KEY, JSON.stringify(manualInputStateObj));
+    } catch (error) {
+      console.error('Error saving session manual input state:', error);
+    }
+  }
+
+  static deleteSessionManualInputState(sessionId: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const allManualInputState = localStorage.getItem(this.MANUAL_INPUT_STATE_KEY);
+      if (allManualInputState) {
+        const manualInputStateObj = JSON.parse(allManualInputState);
+        delete manualInputStateObj[sessionId];
+        localStorage.setItem(this.MANUAL_INPUT_STATE_KEY, JSON.stringify(manualInputStateObj));
+      }
+    } catch (error) {
+      console.error('Error deleting session manual input state:', error);
     }
   }
 }

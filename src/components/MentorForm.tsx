@@ -88,14 +88,43 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
       const quizModeState = LangflowService.getSessionQuizModeState(currentSession.id);
       setIsQuizMode(quizModeState.isQuizMode);
       setQuizResponseCount(quizModeState.quizResponseCount);
+      
+      // Load first reply state
+      const firstReplyState = LangflowService.getSessionFirstReplyState(currentSession.id);
+      setFirstReplyAwaitingYesNo(firstReplyState.firstReplyAwaitingYesNo);
+      
+      // Load different approach state
+      const differentApproachState = LangflowService.getSessionDifferentApproachState(currentSession.id);
+      setUseDifferentApproachMode(differentApproachState.useDifferentApproachMode);
+      
+      // Load auto quiz state
+      const autoQuizState = LangflowService.getSessionAutoQuizState(currentSession.id);
+      setAutoQuizActive(autoQuizState.autoQuizActive);
+      setAutoQuizCount(autoQuizState.autoQuizCount);
+      setPendingAutoQuiz(autoQuizState.pendingAutoQuiz);
+      
+      // Load text input state
+      const textInputState = LangflowService.getSessionTextInputState(currentSession.id);
+      setIsTextInputEnabled(textInputState.isTextInputEnabled);
+      
+      // Load manual input state
+      const manualInputState = LangflowService.getSessionManualInputState(currentSession.id);
+      setIsManualTextInputEnabled(manualInputState.isManualTextInputEnabled);
     } else {
-      // Reset quiz state when no session is selected
+      // Reset all state when no session is selected
       setIsQuizActive(false);
       setQuizQuestionCount(0);
       setIsFiveYearOldMode(false);
       setFiveYearOldStep('initial');
       setIsQuizMode(false);
       setQuizResponseCount(0);
+      setFirstReplyAwaitingYesNo(false);
+      setUseDifferentApproachMode(false);
+      setAutoQuizActive(false);
+      setAutoQuizCount(0);
+      setPendingAutoQuiz(false);
+      setIsTextInputEnabled(false);
+      setIsManualTextInputEnabled(false);
     }
   }, [currentSession?.id]); // Use session ID instead of entire session object
 
@@ -119,6 +148,41 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
       LangflowService.saveSessionQuizModeState(currentSession.id, { isQuizMode, quizResponseCount });
     }
   }, [isQuizMode, quizResponseCount, currentSession?.id]);
+
+  // Save first reply state when it changes
+  useEffect(() => {
+    if (currentSession) {
+      LangflowService.saveSessionFirstReplyState(currentSession.id, { firstReplyAwaitingYesNo });
+    }
+  }, [firstReplyAwaitingYesNo, currentSession?.id]);
+
+  // Save different approach state when it changes
+  useEffect(() => {
+    if (currentSession) {
+      LangflowService.saveSessionDifferentApproachState(currentSession.id, { useDifferentApproachMode });
+    }
+  }, [useDifferentApproachMode, currentSession?.id]);
+
+  // Save auto quiz state when it changes
+  useEffect(() => {
+    if (currentSession) {
+      LangflowService.saveSessionAutoQuizState(currentSession.id, { autoQuizActive, autoQuizCount, pendingAutoQuiz });
+    }
+  }, [autoQuizActive, autoQuizCount, pendingAutoQuiz, currentSession?.id]);
+
+  // Save text input state when it changes
+  useEffect(() => {
+    if (currentSession) {
+      LangflowService.saveSessionTextInputState(currentSession.id, { isTextInputEnabled });
+    }
+  }, [isTextInputEnabled, currentSession?.id]);
+
+  // Save manual input state when it changes
+  useEffect(() => {
+    if (currentSession) {
+      LangflowService.saveSessionManualInputState(currentSession.id, { isManualTextInputEnabled });
+    }
+  }, [isManualTextInputEnabled, currentSession?.id]);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -160,25 +224,7 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
     // Load existing messages for this session
     const sessionMessages = LangflowService.getSessionMessages(session.id);
     setMessages(sessionMessages);
-    // Quiz state will be loaded by useEffect
-    
-    // Reset manual mode when switching sessions
-    setIsManualTextInputEnabled(false);
-    
-    // Determine if text input should be enabled based on current state
-    const lastMessage = sessionMessages[sessionMessages.length - 1];
-    if (lastMessage && lastMessage.sender === 'ai') {
-      // Check if we're in a state where text input should be enabled
-      const shouldEnableInput = !firstReplyAwaitingYesNo && 
-                               !isQuizActive && 
-                               !isFiveYearOldMode && 
-                               !useDifferentApproachMode &&
-                               !autoQuizActive &&
-                               !isQuizMode;
-      setIsTextInputEnabled(shouldEnableInput);
-    } else {
-      setIsTextInputEnabled(false);
-    }
+    // All state will be loaded by useEffect based on session ID
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -226,6 +272,13 @@ Keep it concise and easy for a beginner.`;
       setUseDifferentApproachMode(false); // Reset different approach mode
       setIsTextInputEnabled(false); // Disable text input initially
       console.log('Switched to chat view');
+
+      // Save initial state to session
+      LangflowService.saveSessionFirstReplyState(newSession.id, { firstReplyAwaitingYesNo: true });
+      LangflowService.saveSessionDifferentApproachState(newSession.id, { useDifferentApproachMode: false });
+      LangflowService.saveSessionTextInputState(newSession.id, { isTextInputEnabled: false });
+      LangflowService.saveSessionManualInputState(newSession.id, { isManualTextInputEnabled: false });
+      LangflowService.saveSessionAutoQuizState(newSession.id, { autoQuizActive: false, autoQuizCount: 0, pendingAutoQuiz: false });
 
       // Send to Langflow API with the new session ID
       console.log('Sending message to Langflow API...');

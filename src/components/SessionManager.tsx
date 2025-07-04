@@ -51,6 +51,16 @@ export function SessionManager({ onSessionSelect, currentSessionId }: SessionMan
     ];
     LangflowService.saveSessionMessages(newSession.id, initialMessages);
     
+    // Initialize all session state variables
+    LangflowService.saveSessionFirstReplyState(newSession.id, { firstReplyAwaitingYesNo: true });
+    LangflowService.saveSessionDifferentApproachState(newSession.id, { useDifferentApproachMode: false });
+    LangflowService.saveSessionTextInputState(newSession.id, { isTextInputEnabled: false });
+    LangflowService.saveSessionManualInputState(newSession.id, { isManualTextInputEnabled: false });
+    LangflowService.saveSessionAutoQuizState(newSession.id, { autoQuizActive: false, autoQuizCount: 0, pendingAutoQuiz: false });
+    LangflowService.saveSessionQuizState(newSession.id, { isQuizActive: false, quizQuestionCount: 0 });
+    LangflowService.saveSessionFiveYearOldState(newSession.id, { isFiveYearOldMode: false, fiveYearOldStep: 'initial' });
+    LangflowService.saveSessionQuizModeState(newSession.id, { isQuizMode: false, quizResponseCount: 0 });
+    
     // Call onSessionSelect with the new session and initial messages
     onSessionSelect(newSession);
     
