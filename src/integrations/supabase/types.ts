@@ -193,6 +193,126 @@ export type Database = {
         }
         Relationships: []
       }
+      standards: {
+        Row: {
+          id: number
+          standard_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          standard_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          standard_name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          id: number
+          standard_id: number
+          subject_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          standard_id: number
+          subject_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          standard_id?: number
+          subject_name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_standard_id_fkey"
+            columns: ["standard_id"]
+            isOneToOne: false
+            referencedRelation: "standards"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      chapters: {
+        Row: {
+          id: number
+          subject_id: number
+          chapter_number: number
+          chapter_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          subject_id: number
+          chapter_number: number
+          chapter_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          subject_id?: number
+          chapter_number?: number
+          chapter_name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      topics: {
+        Row: {
+          id: number
+          chapter_id: number
+          topic_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          chapter_id: number
+          topic_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          chapter_id?: number
+          topic_name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topics_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

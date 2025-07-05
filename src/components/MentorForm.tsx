@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button_2';
 import { Info, Paperclip, Send, Loader2, Plus, MessageSquare, MessageSquareOff } from 'lucide-react';
 import { LangflowService, Session } from '@/lib/services/LangflowService';
 import { SessionManager } from './SessionManager';
+import { SearchableDropdown } from '@/components/ui/SearchableDropdown';
+import { curriculumData, CurriculumStandard, CurriculumSubject, CurriculumChapter, CurriculumTopic } from '@/lib/curriculumData';
 
 const Tooltip = ({ text }: { text: string }) => (
   <span className="ml-2 text-xs text-gray-500 cursor-pointer group relative">
@@ -28,11 +30,19 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
   const [showSessionManager, setShowSessionManager] = useState(true);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [form, setForm] = useState({
+    standard: '',
+    subject: '',
+    chapter: '',
     topic: '',
     objectives: '',
-    prerequisites: '',
-    standards: ''
+    prerequisites: ''
   });
+
+  // Curriculum dropdown states
+  const [selectedStandard, setSelectedStandard] = useState<CurriculumStandard | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<CurriculumSubject | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<CurriculumChapter | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<CurriculumTopic | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +76,16 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
 
   // Add state for manual text input toggle
   const [isManualTextInputEnabled, setIsManualTextInputEnabled] = useState(false);
+
+  // Add custom subject, chapter, and topic states
+  const [customSubject, setCustomSubject] = useState('');
+  const [customChapter, setCustomChapter] = useState('');
+  const [customTopic, setCustomTopic] = useState('');
+
+  // Add refs for auto-scroll/auto-focus
+  const subjectRef = useRef<HTMLInputElement | null>(null);
+  const chapterRef = useRef<HTMLInputElement | null>(null);
+  const topicRef = useRef<HTMLInputElement | null>(null);
 
   // Function to handle manual text input toggle
   const handleManualTextInputToggle = () => {
@@ -232,10 +252,25 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
     
     console.log('Form submitted with data:', form);
     
-    // Add validation to ensure topic is filled
-    if (!form.topic.trim()) {
-      console.log('Topic is empty, showing error');
-      setError('Please enter a target topic');
+    // Add validation to ensure all required fields are filled
+    if (!selectedStandard) {
+      console.log('Standard is not selected, showing error');
+      setError('Please select a standard');
+      return;
+    }
+    if (!selectedSubject) {
+      console.log('Subject is not selected, showing error');
+      setError('Please select a subject');
+      return;
+    }
+    if (!selectedChapter) {
+      console.log('Chapter is not selected, showing error');
+      setError('Please select a chapter');
+      return;
+    }
+    if (!selectedTopic) {
+      console.log('Topic is not selected, showing error');
+      setError('Please select a topic');
       return;
     }
     
@@ -251,13 +286,20 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
       setCurrentSession(newSession);
       
       // Build the prompt for the Super Teacher bot
-      const prompt = `Suggest 4 simple learning steps for "${form.topic}".
+      const prompt = `Hey, I need your help to break down the topic "${selectedTopic?.topic_name}" into 4 simple learning steps.
 
-Learning Objectives: ${form.objectives}
+Here's what you should know:
+
+Standard: ${selectedStandard?.standard_name}
+Subject: ${selectedSubject?.subject_name}
+Chapter: ${selectedChapter?.chapter_name}
+Topic: ${selectedTopic?.topic_name}
+Learning Objective: ${form.objectives}
 Prerequisite Knowledge: ${form.prerequisites}
-Curriculum Standards: ${form.standards}
 
-Keep it concise and easy for a beginner.`;
+I want a detailed, easy-to-understand explanation for each step. Use simple language, add real-life examples wherever possible, and if there are types, categories, or different variations of the topic, please include those too.
+
+Basically, I want a clear, structured explanation that makes it easy for beginners to understand the topic confidently.`;
       
       console.log('Built prompt:', prompt);
       
@@ -632,6 +674,23 @@ Keep it concise and easy for a beginner.`;
     );
   }
 
+  const standards = curriculumData;
+  const subjects = selectedStandard
+    ? (selectedStandard.subjects.length > 0
+        ? selectedStandard.subjects
+        : [{ id: -1, subject_name: 'Type your own...', chapters: [] }])
+    : [];
+  const chapters = selectedSubject
+    ? (selectedSubject.chapters.length > 0
+        ? selectedSubject.chapters
+        : [{ id: -1, chapter_number: -1, chapter_name: 'Type your own...', topics: [] }])
+    : [];
+  const topics = selectedChapter
+    ? (selectedChapter.topics.length > 0
+        ? selectedChapter.topics
+        : [{ id: -1, topic_name: 'Type your own...' }])
+    : [];
+
   return (
     <div className="relative w-full h-screen flex items-center justify-center overflow-hidden">
       {/* Decorative BG element */}
@@ -691,30 +750,139 @@ Keep it concise and easy for a beginner.`;
       {/* Main UI */}
       <div className={`transition-all duration-700 ease-in-out w-full h-full ${showChat ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`} style={{ position: showChat ? 'absolute' : 'relative', zIndex: 10 }}>
         {!showChat && (
-          <div className="w-full max-w-2xl mx-auto p-4">
+          <div className="w-full max-w-2xl mx-auto p-4 h-full flex items-center justify-center">
             {/* Mentor Form only, no session sidebar */}
-            <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto shadow-2xl border-0 bg-gradient-to-br from-blue-50 to-purple-100 relative z-10 p-4 sm:p-8">
-              <CardHeader>
-                              <CardTitle className="text-2xl font-bold text-blue-900 flex items-center gap-2">
-                Super Teacher Request
-              </CardTitle>
-              <p className="text-gray-600 mt-1">Fill out the details for your learning module. Your Super Teacher will help you craft the perfect lesson!</p>
+            <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto shadow-2xl border-0 bg-gradient-to-br from-blue-50 to-purple-100 relative z-10 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold text-blue-900 flex items-center gap-2">
+                  Super Teacher Request
+                </CardTitle>
+                <p className="text-gray-600 mt-1 text-sm">Fill out the details for your learning module. Your Super Teacher will help you craft the perfect lesson!</p>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Target Topic */}
+              <CardContent className="space-y-4">
+                {/* Standard */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
-                    Target Topic
-                    <Tooltip text="The main topic or concept you want to learn about." />
+                    Standard
+                    <Tooltip text="Select your grade level (9 or 10)" />
                   </label>
-                  <Input 
-                    name="topic" 
-                    value={form.topic} 
-                    onChange={handleChange} 
-                    placeholder="e.g. Quantum Entanglement" 
-                    className="bg-white/80"
-                    required
+                  <SearchableDropdown
+                    options={standards.map(s => ({ id: s.id, name: s.standard_name }))}
+                    value={selectedStandard ? { id: selectedStandard.id, name: selectedStandard.standard_name } : null}
+                    onValueChange={option => {
+                      setSelectedStandard(option ? standards.find(s => s.id === option.id) || null : null);
+                      setForm(prev => ({ ...prev, standard: option ? option.name : '' }));
+                      setTimeout(() => {
+                        subjectRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        subjectRef.current?.focus();
+                      }, 100);
+                    }}
+                    placeholder="Select Standard"
+                    searchPlaceholder="Search standards..."
                   />
+                </div>
+                {/* Subject */}
+                <div ref={subjectRef}>
+                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                    Subject
+                    <Tooltip text="The subject area (e.g., Mathematics, Science & Technology)" />
+                  </label>
+                  <SearchableDropdown
+                    options={subjects.map(s => ({ id: s.id, name: s.subject_name }))}
+                    value={selectedSubject ? { id: selectedSubject.id, name: selectedSubject.subject_name } : null}
+                    onValueChange={option => {
+                      setSelectedSubject(option ? subjects.find(s => s.id === option.id) || null : null);
+                      setForm(prev => ({ ...prev, subject: option ? option.name : '' }));
+                      if (option && option.id === -1) setCustomSubject('');
+                      setTimeout(() => {
+                        chapterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        chapterRef.current?.focus();
+                      }, 100);
+                    }}
+                    placeholder="Select Subject"
+                    searchPlaceholder="Search subjects..."
+                    disabled={!selectedStandard}
+                  />
+                  {selectedSubject && selectedSubject.id === -1 && (
+                    <input
+                      ref={chapterRef}
+                      type="text"
+                      value={customSubject}
+                      onChange={e => {
+                        setCustomSubject(e.target.value);
+                        setForm(prev => ({ ...prev, subject: e.target.value }));
+                      }}
+                      placeholder="Type your subject..."
+                      className="mt-2 w-full border rounded px-3 py-2"
+                    />
+                  )}
+                </div>
+                {/* Chapter */}
+                <div ref={chapterRef}>
+                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                    Chapter
+                    <Tooltip text="The specific chapter or unit within the subject" />
+                  </label>
+                  <SearchableDropdown
+                    options={chapters.map(c => ({ id: c.id, name: c.chapter_name }))}
+                    value={selectedChapter ? { id: selectedChapter.id, name: selectedChapter.chapter_name } : null}
+                    onValueChange={option => {
+                      setSelectedChapter(option ? chapters.find(c => c.id === option.id) || null : null);
+                      setForm(prev => ({ ...prev, chapter: option ? option.name : '' }));
+                      if (option && option.id === -1) setCustomChapter('');
+                      setTimeout(() => {
+                        topicRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        topicRef.current?.focus();
+                      }, 100);
+                    }}
+                    placeholder="Select Chapter"
+                    searchPlaceholder="Search chapters..."
+                    disabled={!selectedSubject}
+                  />
+                  {selectedChapter && selectedChapter.id === -1 && (
+                    <input
+                      ref={topicRef}
+                      type="text"
+                      value={customChapter}
+                      onChange={e => {
+                        setCustomChapter(e.target.value);
+                        setForm(prev => ({ ...prev, chapter: e.target.value }));
+                      }}
+                      placeholder="Type your chapter..."
+                      className="mt-2 w-full border rounded px-3 py-2"
+                    />
+                  )}
+                </div>
+                {/* Topic */}
+                <div ref={topicRef}>
+                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                    Topic
+                    <Tooltip text="The specific topic or concept within the chapter" />
+                  </label>
+                  <SearchableDropdown
+                    options={topics.map(t => ({ id: t.id, name: t.topic_name }))}
+                    value={selectedTopic ? { id: selectedTopic.id, name: selectedTopic.topic_name } : null}
+                    onValueChange={option => {
+                      setSelectedTopic(option ? topics.find(t => t.id === option.id) || null : null);
+                      setForm(prev => ({ ...prev, topic: option ? option.name : '' }));
+                      if (option && option.id === -1) setCustomTopic('');
+                    }}
+                    placeholder="Select Topic"
+                    searchPlaceholder="Search topics..."
+                    disabled={!selectedChapter}
+                  />
+                  {selectedTopic && selectedTopic.id === -1 && (
+                    <input
+                      type="text"
+                      value={customTopic}
+                      onChange={e => {
+                        setCustomTopic(e.target.value);
+                        setForm(prev => ({ ...prev, topic: e.target.value }));
+                      }}
+                      placeholder="Type your topic..."
+                      className="mt-2 w-full border rounded px-3 py-2"
+                    />
+                  )}
                 </div>
                 {/* Learning Objectives */}
                 <div>
@@ -722,7 +890,7 @@ Keep it concise and easy for a beginner.`;
                     Learning Objectives
                     <Tooltip text="What do you want to achieve? List objectives, one per line." />
                   </label>
-                  <Textarea name="objectives" value={form.objectives} onChange={handleChange} rows={3} placeholder="e.g.\nExplain spooky action at distance\nCalculate entanglement probability" className="bg-white/80" />
+                  <Textarea name="objectives" value={form.objectives} onChange={handleChange} rows={2} placeholder="e.g.\nExplain spooky action at distance\nCalculate entanglement probability" className="bg-white/80" />
                 </div>
                 {/* Prerequisite Knowledge */}
                 <div>
@@ -730,20 +898,12 @@ Keep it concise and easy for a beginner.`;
                     Prerequisite Knowledge
                     <Tooltip text="What should the learner already know? List prerequisites, one per line." />
                   </label>
-                  <Textarea name="prerequisites" value={form.prerequisites} onChange={handleChange} rows={2} placeholder="e.g.\nbasic quantum mechanics\nlinear algebra" className="bg-white/80" />
-                </div>
-                {/* Curriculum Standards */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
-                    Curriculum Standards
-                    <Tooltip text="Any standards or frameworks to align with?" />
-                  </label>
-                  <Input name="standards" value={form.standards} onChange={handleChange} placeholder="e.g. Next Generation Science Standards HS-PS4-3" className="bg-white/80" />
+                  <Textarea name="prerequisites" value={form.prerequisites} onChange={handleChange} rows={1} placeholder="e.g.\nbasic quantum mechanics\nlinear algebra" className="bg-white/80" />
                 </div>
                 <div className="pt-2 flex justify-end">
                   <Button 
                     type="submit" 
-                    disabled={isLoading || !form.topic.trim()}
+                    disabled={isLoading || !selectedStandard || !selectedSubject || !selectedChapter || !selectedTopic}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
