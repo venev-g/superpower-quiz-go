@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface VerdictScreenProps {
   answers: number[];
+  sessionId: string | null;
   onRestart: () => void;
 }
 
@@ -19,7 +20,7 @@ interface PersonalityResult {
   traits?: string[];
 }
 
-const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, onRestart }) => {
+const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, sessionId, onRestart }) => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [result, setResult] = useState<PersonalityResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,42 +31,69 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, onRestart }) => 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Create a quiz session first (if not already created)
-      const { data: session, error: sessionError } = await supabase
-        .from('quiz_sessions')
-        .insert([{
-          user_id: user.id,
-          completed_at: new Date().toISOString(),
-          current_question: answers.length,
-          total_questions: answers.length,
-          score: personalityResult.score,
-          result: { 
+      if (sessionId) {
+        // Update the existing session with the result
+        await supabase
+          .from('quiz_sessions')
+          .update({
+            result: { 
+              personality_type: personalityResult.title,
+              description: personalityResult.description,
+              traits: personalityResult.traits || []
+            },
+            score: personalityResult.score
+          })
+          .eq('id', sessionId);
+
+        // Save the quiz result
+        await supabase
+          .from('quiz_results')
+          .insert([{
+            session_id: sessionId,
+            user_id: user.id,
             personality_type: personalityResult.title,
-            description: personalityResult.description,
-            traits: personalityResult.traits || []
-          },
-          answers: answers
-        }])
-        .select()
-        .single();
+            score: personalityResult.score,
+            answers: answers
+          }]);
+      } else {
+        // Fallback: create session if somehow sessionId is missing
+        console.warn('No sessionId provided, creating new session as fallback');
+        const { data: session, error: sessionError } = await supabase
+          .from('quiz_sessions')
+          .insert([{
+            user_id: user.id,
+            completed_at: new Date().toISOString(),
+            current_question: answers.length,
+            total_questions: answers.length,
+            score: personalityResult.score,
+            result: { 
+              personality_type: personalityResult.title,
+              description: personalityResult.description,
+              traits: personalityResult.traits || []
+            },
+            answers: answers
+          }])
+          .select()
+          .single();
 
-      if (sessionError) throw sessionError;
+        if (sessionError) throw sessionError;
 
-      // Save the quiz result
-      await supabase
-        .from('quiz_results')
-        .insert([{
-          session_id: session.id,
-          user_id: user.id,
-          personality_type: personalityResult.title,
-          score: personalityResult.score,
-          answers: answers
-        }]);
+        // Save the quiz result
+        await supabase
+          .from('quiz_results')
+          .insert([{
+            session_id: session.id,
+            user_id: user.id,
+            personality_type: personalityResult.title,
+            score: personalityResult.score,
+            answers: answers
+          }]);
+      }
 
     } catch (error: unknown) {
       console.error('Error saving result:', error);
     }
-  }, [answers]);
+  }, [answers, sessionId]);
 
   const calculateResult = useCallback(async () => {
     try {

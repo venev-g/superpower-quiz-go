@@ -13,6 +13,7 @@ const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<AppState>('welcome');
   const [quizProgress, setQuizProgress] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -24,8 +25,9 @@ const Index = () => {
     setCurrentScreen('quiz');
   };
 
-  const handleQuizComplete = (finalAnswers: number[]) => {
+  const handleQuizComplete = (finalAnswers: number[], quizSessionId: string | null) => {
     setAnswers(finalAnswers);
+    setSessionId(quizSessionId);
     setCurrentScreen('verdict');
   };
 
@@ -33,6 +35,7 @@ const Index = () => {
     setCurrentScreen('welcome');
     setQuizProgress(0);
     setAnswers([]);
+    setSessionId(null);
   };
 
   if (loading) {
@@ -70,6 +73,7 @@ const Index = () => {
         {currentScreen === 'verdict' && (
           <VerdictScreen 
             answers={answers}
+            sessionId={sessionId}
             onRestart={handleRestartQuiz}
           />
         )}
