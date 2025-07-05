@@ -22,22 +22,34 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onAnswerSelect, 
   questionNumber 
 }) => {
+  // Safety check to prevent undefined errors
+  if (!question) {
+    return (
+      <Card className="w-full max-w-md p-5 bg-white/80 backdrop-blur-sm shadow-xl border-0 rounded-3xl">
+        <div className="text-center space-y-4">
+          <div className="text-4xl animate-spin">🧠</div>
+          <p className="text-gray-600">Loading question...</p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md p-5 bg-white/80 backdrop-blur-sm shadow-xl border-0 rounded-3xl animate-fade-in">
       <div className="space-y-5">
         {/* Question Header */}
         <div className="text-center space-y-2">
           <div className="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded-full inline-block">
-            {question.subtitle}
+            {question.subtitle || ''}
           </div>
           <h2 className="text-lg font-bold text-gray-800 leading-tight">
-            {question.title}
+            {question.title || 'Loading...'}
           </h2>
         </div>
 
         {/* Answer Options */}
         <div className="space-y-2">
-          {question.options.map((option, index) => (
+          {(question.options || []).map((option, index) => (
             <Button
               key={index}
               onClick={() => onAnswerSelect(index)}
