@@ -1,0 +1,329 @@
+CREATE DATABASE maharashtra_board;
+USE maharashtra_board;
+
+-- Table: Standards
+CREATE TABLE standards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    standard_name VARCHAR(10) NOT NULL -- Example: '9th', '10th'
+);
+
+-- Table: Subjects
+CREATE TABLE subjects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    standard_id INT,
+    subject_name VARCHAR(100) NOT NULL,
+    FOREIGN KEY (standard_id) REFERENCES standards(id)
+);
+
+-- Table: Chapters
+CREATE TABLE chapters (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subject_id INT,
+    chapter_number INT,
+    chapter_name VARCHAR(255) NOT NULL,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id)
+);
+
+-- Table: Topics
+CREATE TABLE topics (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    chapter_id INT,
+    topic_name VARCHAR(255) NOT NULL,
+    FOREIGN KEY (chapter_id) REFERENCES chapters(id)
+);
+
+-- Insert Standards
+INSERT INTO standards (standard_name) VALUES ('9th'), ('10th');
+
+-- Insert Subjects for 9th Standard
+INSERT INTO subjects (standard_id, subject_name) VALUES 
+(1, 'Mathematics'), 
+(1, 'Science & Technology'), 
+(1, 'Social Science'),
+(1, 'English'),
+(1, 'Marathi'),
+(1, 'Hindi'),
+(1, 'Sanskrit'),
+(1, 'ICT');
+
+-- Insert Subjects for 10th Standard
+INSERT INTO subjects (standard_id, subject_name) VALUES 
+(2, 'Mathematics (Algebra)'), 
+(2, 'Mathematics (Geometry)'), 
+(2, 'Science & Technology Part 1'), 
+(2, 'Science & Technology Part 2'), 
+(2, 'Social Science'),
+(2, 'English'),
+(2, 'Marathi'),
+(2, 'Hindi'),
+(2, 'Sanskrit'),
+(2, 'ICT');
+
+-- Complete Chapters and Topics for 9th Mathematics
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(1, 1, 'Sets'), (1, 2, 'Real Numbers'), (1, 3, 'Polynomials'), (1, 4, 'Ratio and Proportion'), (1, 5, 'Linear Equations in Two Variables'), (1, 6, 'Financial Planning'), (1, 7, 'Statistics'), (1, 8, 'Basic Concepts in Geometry'), (1, 9, 'Parallel Lines and Transversals'), (1, 10, 'Triangles'), (1, 11, 'Constructions of Triangles'), (1, 12, 'Quadrilaterals'), (1, 13, 'Circles'), (1, 14, 'Coordinate Geometry'), (1, 15, 'Trigonometry'), (1, 16, 'Surface Area and Volume');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(1, 'Definition of Sets'), (1, 'Types of Sets'), (1, 'Operations on Sets'),
+(2, 'Irrational Numbers'), (2, 'Laws of Exponents'), (2, 'Representation on Number Line'),
+(3, 'Types of Polynomials'), (3, 'Operations on Polynomials'),
+(4, 'Direct and Inverse Proportion'),
+(5, 'Graphical Representation'), (5, 'Solutions of Linear Equations'),
+(6, 'Budgeting'), (6, 'Profit and Loss'),
+(7, 'Mean, Median, Mode'), (7, 'Data Interpretation'),
+(8, 'Basic Terms in Geometry'),
+(9, 'Angle Sum Property'),
+(10, 'Types of Triangles'), (10, 'Congruency in Triangles'),
+(11, 'Construction Techniques'),
+(12, 'Properties of Quadrilaterals'),
+(13, 'Parts of a Circle'), (13, 'Angles in Circles'),
+(14, 'Cartesian Plane'), (14, 'Plotting Points'),
+(15, 'Trigonometric Ratios'), (15, 'Applications in Real Life'),
+(16, 'Volume and Surface Area of Solids');
+
+-- Complete Chapters and Topics for 9th Science & Technology
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(2, 1, 'Laws of Motion'), (2, 2, 'Work and Energy'), (2, 3, 'Current Electricity'), (2, 4, 'Measurement of Matter'), (2, 5, 'Acids, Bases and Salts'), (2, 6, 'Classification of Plants'), (2, 7, 'Energy Flow in Ecosystem'), (2, 8, 'Useful and Harmful Microbes'), (2, 9, 'Environmental Management'), (2, 10, 'Information Communication Technology'), (2, 11, 'Reflection of Light'), (2, 12, 'Sound'), (2, 13, 'Carbon: An Important Element'), (2, 14, 'Substances in Common Use'), (2, 15, 'Life Processes in Living Organisms'), (2, 16, 'Heredity and Variation');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(17, 'Newton’s Laws'), (17, 'Momentum'), (17, 'Inertia'),
+(18, 'Concept of Work'), (18, 'Kinetic and Potential Energy'), (18, 'Power and its Units'),
+(19, 'Electric Current'), (19, 'Ohm’s Law'), (19, 'Resistance and Factors'),
+(20, 'Units and Measurement'), (20, 'Mole Concept'),
+(21, 'Properties of Acids'), (21, 'Properties of Bases'), (21, 'pH and its Applications'),
+(22, 'Plant Classification'), (22, 'Characteristics of Plant Groups'),
+(23, 'Energy Transfer in Ecosystem'), (23, 'Food Chains and Webs'),
+(24, 'Beneficial Microbes'), (24, 'Harmful Microbes'),
+(25, 'Environmental Conservation'), (25, 'Pollution Control'),
+(26, 'Use of ICT in Daily Life'),
+(27, 'Reflection of Light'), (27, 'Mirrors and Lenses'),
+(28, 'Production and Propagation of Sound'), (28, 'Characteristics of Sound'),
+(29, 'Carbon Compounds'), (29, 'Uses of Carbon in Daily Life'),
+(30, 'Synthetic and Natural Materials'),
+(31, 'Nutrition in Living Organisms'), (31, 'Respiration'),
+(32, 'Heredity Principles'), (32, 'Variation and Evolution');
+
+
+-- Continue SQL for Remaining 9th Standard Subjects, Chapters, and Topics
+
+-- Chapters for 9th Social Science
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(3, 1, 'India: Physical Features'), 
+(3, 2, 'Climate'), 
+(3, 3, 'Natural Resources'), 
+(3, 4, 'Population'), 
+(3, 5, 'Economic Development'), 
+(3, 6, 'Political Science: Democracy'), 
+(3, 7, 'History: Ancient India');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(84, 'Mountains, Plateaus, and Plains'),
+(85, 'Monsoon and Seasons'),
+(86, 'Land, Water, Forest Resources'),
+(87, 'Population Distribution and Growth'),
+(88, 'Agriculture and Industries'),
+(89, 'Features of Democracy'),
+(90, 'Indus Valley Civilization');
+
+-- Chapters for 9th English
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(4, 1, 'Reading Comprehension'), 
+(4, 2, 'Poetry Study'), 
+(4, 3, 'Grammar and Composition');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(91, 'Unseen Passages and Interpretation'),
+(92, 'Poems and Literary Devices'),
+(93, 'Grammar Exercises, Essay and Letter Writing');
+
+-- Chapters for 9th Marathi
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(5, 1, 'Marathi Literature'), 
+(5, 2, 'Grammar and Composition');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(94, 'Stories, Poems, and Plays'),
+(95, 'Grammar Rules and Writing Skills');
+
+-- Chapters for 9th Hindi
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(6, 1, 'Hindi Literature'), 
+(6, 2, 'Grammar and Writing Skills');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(96, 'Prose, Poetry, and Drama'),
+(97, 'Grammar Practice and Composition');
+
+-- Chapters for 9th Sanskrit
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(7, 1, 'Sanskrit Texts'), 
+(7, 2, 'Grammar and Language Skills');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(98, 'Shlokas and Subhashitas'),
+(99, 'Grammar, Translation, and Composition');
+
+-- Chapters for 9th ICT
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(8, 1, 'ICT Basics'), 
+(8, 2, 'Applications of ICT');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(100, 'Introduction to Computers and Internet'),
+(101, 'Use of ICT in Daily
+-- Continue SQL for 10th Standard Subjects, Chapters, and Topics
+
+-- Chapters for 10th Mathematics (Algebra)
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(9, 1, 'Linear Equations in Two Variables'), 
+(9, 2, 'Quadratic Equations'), 
+(9, 3, 'Arithmetic Progression'), 
+(9, 4, 'Financial Planning'), 
+(9, 5, 'Probability'), 
+(9, 6, 'Statistics');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(33, 'Graphical Solution'), (33, 'System of Equations'),
+(34, 'Roots of Quadratic Equation'), (34, 'Factorisation and Formula Method'),
+(35, 'General Term of AP'), (35, 'Sum of n Terms'),
+(36, 'Income and Expenditure Planning'), (36, 'Loans and Interest'),
+(37, 'Concept of Probability'),
+(38, 'Mean, Median, Mode');
+
+-- Chapters for 10th Mathematics (Geometry)
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(10, 1, 'Similarity'), 
+(10, 2, 'Pythagoras Theorem'), 
+(10, 3, 'Circles'), 
+(10, 4, 'Constructions'), 
+(10, 5, 'Coordinate Geometry'), 
+(10, 6, 'Trigonometry'), 
+(10, 7, 'Mensuration');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(39, 'Similar Triangles'),
+(40, 'Proof and Applications'),
+(41, 'Tangents and Secants'),
+(42, 'Division of Line Segment'),
+(43, 'Distance Between Two Points'),
+(44, 'Trigonometric Ratios and Identities'), (44, 'Heights and Distances'),
+(45, 'Surface Area and Volume of Solids');
+
+-- Chapters for 10th Science & Technology Part 1
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(11, 1, 'Gravitation'), 
+(11, 2, 'Periodic Classification of Elements'), 
+(11, 3, 'Chemical Reactions and Equations'), 
+(11, 4, 'Effects of Electric Current'), 
+(11, 5, 'Heat'), 
+(11, 6, 'Refraction of Light'), 
+(11, 7, 'Lenses'), 
+(11, 8, 'Metallurgy'), 
+(11, 9, 'Carbon Compounds');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(46, 'Universal Law of Gravitation'), (46, 'Free Fall and Escape Velocity'),
+(47, 'Mendeleev’s Periodic Table'), (47, 'Modern Periodic Table'),
+(48, 'Types of Chemical Reactions'),
+(49, 'Heating Effect'), (49, 'Magnetic Effect'), (49, 'Electric Motor and Generator'),
+(50, 'Measurement of Heat'), (50, 'Specific Heat Capacity'),
+(51, 'Laws of Refraction'),
+(52, 'Image Formation by Lenses'), (52, 'Lens Formula and Applications'),
+(53, 'Properties and Extraction of Metals'),
+(54, 'Carbon Compounds and their Uses');
+
+-- Continue SQL for 10th Standard Subjects, Chapters, and Topics (Part 2)
+
+-- Chapters for 10th Science & Technology Part 2
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(12, 1, 'Heredity and Evolution'), 
+(12, 2, 'Life Processes in Living Organisms Part 1'), 
+(12, 3, 'Life Processes in Living Organisms Part 2'), 
+(12, 4, 'Environmental Management'), 
+(12, 5, 'Towards Green Energy'), 
+(12, 6, 'Animal Classification'), 
+(12, 7, 'Introduction to Microbiology'), 
+(12, 8, 'Cell Biology and Biotechnology'), 
+(12, 9, 'Social Health'), 
+(12, 10, 'Disaster Management');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(55, 'Mendel's Laws of Inheritance'), (55, 'Evolution and Speciation'),
+(56, 'Nutrition and Respiration'),
+(57, 'Excretion and Control Systems'),
+(58, 'Biodiversity Conservation'),
+(59, 'Renewable Energy Sources'),
+(60, 'Animal Phyla Characteristics'),
+(61, 'Beneficial Microbes'), (61, 'Harmful Microbes'),
+(62, 'Biotechnology Applications'),
+(63, 'Public Health Awareness'),
+(64, 'Types of Disasters and Management Strategies');
+
+-- Chapters for 10th Social Science
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(13, 1, 'Historiography Development'), 
+(13, 2, 'Heritage Management'), 
+(13, 3, 'Mass Media and History'), 
+(13, 4, 'Entertainment and History'), 
+(13, 5, 'Sports and History'), 
+(13, 6, 'Tourism and History'), 
+(13, 7, 'History of Modern India'), 
+(13, 8, 'Democratic Reforms');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(65, 'Sources of History'),
+(66, 'Preservation of Heritage'),
+(67, 'Role of Mass Media in History'),
+(68, 'Cultural Aspects of History'),
+(69, 'Development of Sports'),
+(70, 'Tourism Industry and Heritage'),
+(71, 'Freedom Struggle of India'),
+(72, 'Strengthening Democracy');
+
+-- Chapters for 10th English
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(14, 1, 'Reading Skills'), 
+(14, 2, 'Poetry Appreciation'), 
+(14, 3, 'Grammar and Writing Skills');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(73, 'Unseen Passages'),
+(74, 'Poems and Figures of Speech'),
+(75, 'Tenses, Voice, Reported Speech'), (75, 'Essay, Letter and Story Writing');
+
+-- Chapters for 10th Marathi
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(15, 1, 'Marathi Literature'), 
+(15, 2, 'Grammar and Composition');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(76, 'Prose and Poetry'),
+(77, 'Grammar Rules and Writing Skills');
+
+-- Chapters for 10th Hindi
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(16, 1, 'Hindi Literature'), 
+(16, 2, 'Grammar and Composition');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(78, 'Stories and Poems'),
+(79, 'Grammar and Writing Practice');
+
+-- Chapters for 10th Sanskrit
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(17, 1, 'Sanskrit Literature'), 
+(17, 2, 'Grammar and Composition');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(80, 'Shlokas and Subhashitas'),
+(81, 'Grammar, Translation, and Composition');
+
+-- Chapters for 10th ICT
+INSERT INTO chapters (subject_id, chapter_number, chapter_name) VALUES 
+(18, 1, 'ICT Applications'), 
+(18, 2, 'Cyber Safety');
+
+INSERT INTO topics (chapter_id, topic_name) VALUES 
+(82, 'Use of ICT in Education'),
+(83, 'Cyber Security and Ethics');
+
