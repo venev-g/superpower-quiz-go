@@ -286,14 +286,14 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
       setCurrentSession(newSession);
       
       // Build the prompt for the Super Teacher bot
-      const prompt = `Hey, I need your help to break down the topic "${selectedTopic?.topic_name}" into 4 simple learning steps.
+      const prompt = `Hey, I need your help to break down the topic "${form.topic}" into 4 simple learning steps.
 
 Here's what you should know:
 
-Standard: ${selectedStandard?.standard_name}
-Subject: ${selectedSubject?.subject_name}
-Chapter: ${selectedChapter?.chapter_name}
-Topic: ${selectedTopic?.topic_name}
+Standard: ${form.standard}
+Subject: ${form.subject}
+Chapter: ${form.chapter}
+Topic: ${form.topic}
 Learning Objective: ${form.objectives}
 Prerequisite Knowledge: ${form.prerequisites}
 
@@ -681,14 +681,10 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
         : [{ id: -1, subject_name: 'Type your own...', chapters: [] }])
     : [];
   const chapters = selectedSubject
-    ? (selectedSubject.chapters.length > 0
-        ? selectedSubject.chapters
-        : [{ id: -1, chapter_number: -1, chapter_name: 'Type your own...', topics: [] }])
+    ? ([{ id: -1, chapter_number: -1, chapter_name: 'Type your own...', topics: [] }, ...selectedSubject.chapters])
     : [];
   const topics = selectedChapter
-    ? (selectedChapter.topics.length > 0
-        ? selectedChapter.topics
-        : [{ id: -1, topic_name: 'Type your own...' }])
+    ? ([{ id: -1, topic_name: 'Type your own...' }, ...selectedChapter.topics])
     : [];
 
   return (
