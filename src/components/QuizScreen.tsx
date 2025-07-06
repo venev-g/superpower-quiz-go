@@ -90,8 +90,8 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
 
   const findOrCreateQuizSession = useCallback(async () => {
     try {
-      if (!user || sessionInitialized) {
-        console.log('Session already initialized or no user, skipping session creation');
+      if (!user || sessionInitialized || questions.length === 0) {
+        console.log('Session already initialized, no user, or questions not loaded yet, skipping session creation');
         return;
       }
 
@@ -117,12 +117,15 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
         const resumeQuestionIndex = existingSession.current_question || 0;
         const resumeAnswers = Array.isArray(existingSession.answers) ? existingSession.answers as number[] : [];
         
-        setCurrentQuestion(resumeQuestionIndex);
+        // Ensure the question index is valid
+        const validQuestionIndex = Math.max(0, Math.min(resumeQuestionIndex, questions.length - 1));
+        
+        setCurrentQuestion(validQuestionIndex);
         setAnswers(resumeAnswers);
-        onProgressUpdate(resumeQuestionIndex);
+        onProgressUpdate(validQuestionIndex);
         setSessionInitialized(true);
         
-        console.log('Resuming existing session:', existingSession.id, 'at question:', resumeQuestionIndex);
+        console.log('Resuming existing session:', existingSession.id, 'at question:', validQuestionIndex);
         return;
       }
 
@@ -334,13 +337,26 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
     );
   }
 
+  // Safety check to ensure we have a valid question before rendering
+  const currentQuestionData = questions[currentQuestion];
+  if (!currentQuestionData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-4xl animate-spin">🧠</div>
+          <p className="text-gray-600">Loading question...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col justify-between py-4">
       <ProgressTracker current={currentQuestion + 1} total={questions.length} />
       
       <div className="flex-1 flex items-center justify-center px-4">
         <QuestionCard
-          question={questions[currentQuestion]}
+          question={currentQuestionData}
           onAnswerSelect={handleAnswerSelect}
           questionNumber={currentQuestion + 1}
         />
