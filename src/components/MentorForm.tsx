@@ -286,7 +286,7 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
       setCurrentSession(newSession);
       
       // Build the prompt for the Super Teacher bot
-      const prompt = `Hey, I need your help to break down the topic "${form.topic}" into 4 simple learning steps.
+      const prompt = `Hey, I need your help to break down the topic "${form.topic}" into 4 simple learning steps into single message .
 
 Here's what you should know:
 
