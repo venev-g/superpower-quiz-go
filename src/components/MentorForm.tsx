@@ -310,13 +310,13 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       // Save initial messages to session
       LangflowService.saveSessionMessages(newSession.id, initialMessages);
       setShowChat(true);
-      setFirstReplyAwaitingYesNo(true); // Await Yes/No after first reply
+      setFirstReplyAwaitingYesNo(false); // Don't show Yes/No until after first reply
       setUseDifferentApproachMode(false); // Reset different approach mode
       setIsTextInputEnabled(false); // Disable text input initially
       console.log('Switched to chat view');
 
       // Save initial state to session
-      LangflowService.saveSessionFirstReplyState(newSession.id, { firstReplyAwaitingYesNo: true });
+      LangflowService.saveSessionFirstReplyState(newSession.id, { firstReplyAwaitingYesNo: false });
       LangflowService.saveSessionDifferentApproachState(newSession.id, { useDifferentApproachMode: false });
       LangflowService.saveSessionTextInputState(newSession.id, { isTextInputEnabled: false });
       LangflowService.saveSessionManualInputState(newSession.id, { isManualTextInputEnabled: false });
@@ -338,6 +338,10 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       setMessages(updatedMessages);
       // Save updated messages to session
       LangflowService.saveSessionMessages(newSession.id, updatedMessages);
+      
+      // Now that we have the first bot reply, show Yes/No buttons
+      setFirstReplyAwaitingYesNo(true);
+      LangflowService.saveSessionFirstReplyState(newSession.id, { firstReplyAwaitingYesNo: true });
       
       // Show demo mode notification if applicable
       if (isDemoResponse) {
@@ -690,8 +694,8 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
   return (
     <div className="relative w-full h-screen flex items-center justify-center overflow-hidden">
       {/* Decorative BG element */}
-      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-gradient-to-br from-blue-300 via-purple-200 to-pink-200 rounded-full blur-3xl opacity-60 z-0 animate-pulse" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-200 via-purple-100 to-blue-200 rounded-full blur-2xl opacity-50 z-0" />
+      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-gradient-to-br from-blue-300 via-purple-300 to-pink-200 rounded-full blur-3xl opacity-60 z-0 animate-pulse" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-200 via-purple-200 to-blue-200 rounded-full blur-2xl opacity-50 z-0" />
       {/* Science & Math SVGs - new set */}
       {/* Atom */}
       <svg className="absolute left-10 top-10 w-20 h-20 opacity-50 z-0" viewBox="0 0 64 64" fill="none">
@@ -748,7 +752,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
         {!showChat && (
           <div className="w-full max-w-2xl mx-auto p-4 h-full flex items-center justify-center">
             {/* Mentor Form only, no session sidebar */}
-            <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto shadow-2xl border-0 bg-gradient-to-br from-blue-50 to-purple-100 relative z-10 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto shadow-2xl border-0 bg-gradient-to-br from-blue-50 to-purple-200 relative z-10 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-bold text-blue-900 flex items-center gap-2">
                   Super Teacher Request
@@ -926,12 +930,12 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       {/* Chat UI */}
       {showChat && (
         <div className="absolute inset-0 w-full h-full flex flex-col z-20 transition-all duration-700 ease-in-out opacity-100 scale-100">
-          {/* Chat header */}
-          <div className="w-full flex items-center justify-between px-4 sm:px-8 py-4 sm:py-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 shadow-lg z-30">
+          {/* Blog header */}
+          <div className="w-full flex items-center justify-between px-4 sm:px-8 py-4 sm:py-6 bg-white border-b border-gray-200 shadow-sm z-30">
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="mr-2 p-2 rounded bg-white/10 hover:bg-white/20 text-white focus:outline-none"
+                className="mr-2 p-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 focus:outline-none transition"
                 onClick={() => setShowSessionManager((v) => !v)}
                 title={showSessionManager ? 'Hide sessions' : 'Show sessions'}
               >
@@ -939,22 +943,22 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                 <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect y="4" width="24" height="2" rx="1" fill="currentColor"/><rect y="11" width="24" height="2" rx="1" fill="currentColor"/><rect y="18" width="24" height="2" rx="1" fill="currentColor"/></svg>
               </button>
               <img src="/images/mentor2.png" alt="Super Teacher" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-purple-400 shadow-md bg-white object-cover" />
-              <span className="text-white text-lg sm:text-2xl font-bold tracking-wide drop-shadow">Super Teacher</span>
+              <span className="text-white text-lg sm:text-2xl font-bold tracking-wide border border-purple-400 rounded px-2 py-1 bg-purple-400/80 shadow-md">Super Teacher</span>
               {currentSession && (
-                <span className="text-white/80 text-sm">• {currentSession.name}</span>
+                <span className="text-gray-600 text-sm">• {currentSession.name}</span>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-white/70 text-xs sm:text-sm font-medium">Advanced Learning Assistant</span>
+              <span className="text-gray-500 text-xs sm:text-sm font-medium">Advanced Learning Assistant</span>
               {isManualTextInputEnabled && (
-                <span className="text-white/90 text-xs sm:text-sm font-medium bg-green-500/20 px-2 py-1 rounded-full flex items-center gap-1">
+                <span className="text-green-700 text-xs sm:text-sm font-medium bg-green-100 px-2 py-1 rounded-full flex items-center gap-1">
                   <MessageSquare className="w-3 h-3" />
                   Keyboard Mode
                 </span>
               )}
               <button
                 type="button"
-                className="ml-4 px-3 py-1 rounded bg-white/20 hover:bg-white/40 text-white font-semibold text-sm transition"
+                className="ml-4 px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition"
                 onClick={() => window.location.href = '/dashboard'}
               >
                 Back
@@ -962,8 +966,8 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
             </div>
           </div>
           
-          {/* Chat content with session manager */}
-          <div className="flex-1 flex overflow-hidden">
+          {/* Blog content with session manager */}
+          <div className="flex-1 flex overflow-hidden bg-gray-50">
             {/* Session Manager Sidebar (only in chat) */}
             {showSessionManager && (
               <div className="w-80 border-r border-gray-200 bg-white p-4 overflow-y-auto transition-all duration-300">
@@ -974,42 +978,83 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
               </div>
             )}
             
-            {/* Chat messages */}
+            {/* Blog content */}
             <div className="flex-1 flex flex-col">
-              <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-4 sm:py-8 flex flex-col gap-4 sm:gap-6 max-h-[calc(100vh-120px)] min-h-0 pb-40" style={{ minHeight: 0 }}>
+              <div 
+                className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 flex flex-col gap-8 max-h-[calc(100vh-120px)] min-h-0 pb-40" 
+                style={{ 
+                  minHeight: 0,
+                  backgroundImage: `
+                    linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
+                    url(/images/blog_bg.jpeg)
+                  `,
+                  backgroundSize: '300px 300px, 300px 300px',
+                  backgroundPosition: 'center, center',
+                  backgroundRepeat: 'repeat, repeat',
+                  backgroundAttachment: 'fixed, fixed'
+                }}
+              >
                 {messages.map((msg, idx) => (
-                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end w-full`}>
-                    {msg.sender === 'ai' && (
-                      <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                    )}
-                    <div className={`relative max-w-full overflow-x-auto px-4 sm:px-6 py-3 sm:py-4 rounded-3xl shadow-xl text-base font-medium transition-all whitespace-pre-wrap break-words
-                      ${msg.sender === 'user'
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-br-2xl rounded-tr-3xl animate-fade-in-right'
-                        : 'bg-gradient-to-br from-purple-200 to-pink-200 text-gray-900 rounded-bl-2xl rounded-tl-3xl animate-fade-in-left'}
-                    `}>
-                      {msg.sender === 'ai' ? msg.text.replace(/\*\*/g, '') : msg.text}
-                      {msg.sender === 'ai' && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs text-gray-500">Response length: {msg.text.length} characters</span>
-                          {msg.isDemo && (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                              Demo Mode
-                            </span>
-                          )}
-                          <button
-                            className="text-xs text-blue-600 underline ml-2"
-                            onClick={() => {
-                              navigator.clipboard.writeText(msg.text);
-                              alert('Raw response copied to clipboard!');
-                            }}
-                          >
-                            Copy Raw Response
-                          </button>
+                  <div key={idx} className="w-full">
+                    {msg.sender === 'ai' ? (
+                      /* Blog post style for AI responses */
+                      <article className="w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+                        {/* Blog post header */}
+                        <div className="px-6 py-4 bg-gradient-to-r from-purple-400 to-pink-300 text-white">
+                          <div className="flex items-center gap-3">
+                            <img src="/images/mentor2.png" alt="Super Teacher" className="w-8 h-8 rounded-full border-2 border-white shadow-md bg-white object-cover" />
+                            <div>
+                              <h3 className="font-bold text-lg text-white border border-purple-400 rounded px-2 py-1 bg-purple-400/80 shadow-md">Super Teacher</h3>
+                              <p className="text-white text-sm">Learning Assistant</p>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    {msg.sender === 'user' && (
-                      <div className="ml-2 sm:mr-3">{userAvatar}</div>
+                        
+                        {/* Blog post content */}
+                        <div className="px-6 py-6">
+                          <div className="prose prose-lg max-w-none">
+                            <div className="text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
+                              {msg.text.replace(/\*\*/g, '')}
+                            </div>
+                          </div>
+                          
+                          {/* Blog post footer */}
+                          <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between text-sm text-gray-500">
+                            <div className="flex items-center gap-4">
+                              <span>Response length: {msg.text.length} characters</span>
+                              {msg.isDemo && (
+                                <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                                  Demo Mode
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              className="text-blue-600 underline hover:text-blue-800 transition"
+                              onClick={() => {
+                                navigator.clipboard.writeText(msg.text);
+                                alert('Raw response copied to clipboard!');
+                              }}
+                            >
+                              Copy Raw Response
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    ) : (
+                      /* Comment style for user messages - now appears below bot replies */
+                      <div className="w-full max-w-6xl mx-auto mt-4">
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 shadow-sm">
+                          <div className="flex items-start gap-3">
+                            <img src="/images/user-avatar.png" alt="User" className="w-8 h-8 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-sm text-blue-700 font-semibold mb-1">You</div>
+                              <div className="text-gray-800 whitespace-pre-wrap break-words">
+                                {msg.text}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1023,11 +1068,12 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                   // 1. Yes/No after first reply
                   if (firstReplyAwaitingYesNo) {
                     return (
-                      <div className="flex justify-start items-end w-full">
-                        <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                        <div className="flex flex-wrap gap-2 max-w-[90vw] sm:max-w-xl">
-                          <button onClick={() => handleQuickResponse('Yes')} className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">Yes</button>
-                          <button onClick={() => handleQuickResponse('No')} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">No</button>
+                      <div className="w-full max-w-6xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                          <div className="flex flex-wrap gap-3">
+                            <button onClick={() => handleQuickResponse('Yes')} className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">Yes</button>
+                            <button onClick={() => handleQuickResponse('No')} className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">No</button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1045,13 +1091,15 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                     !isFiveYearOldMode
                   ) {
                     return (
-                      <div className="flex justify-start items-end w-full">
-                        <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                        <div className="flex flex-wrap gap-2 max-w-[90vw] sm:max-w-xl">
-                          <button onClick={() => handleQuizAnswer('A')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">A</button>
-                          <button onClick={() => handleQuizAnswer('B')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">B</button>
-                          <button onClick={() => handleQuizAnswer('C')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">C</button>
-                          <button onClick={() => handleQuizAnswer('D')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">D</button>
+                      <div className="w-full max-w-6xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">Select your answer:</h3>
+                          <div className="flex flex-wrap gap-3">
+                            <button onClick={() => handleQuizAnswer('A')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">A</button>
+                            <button onClick={() => handleQuizAnswer('B')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">B</button>
+                            <button onClick={() => handleQuizAnswer('C')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">C</button>
+                            <button onClick={() => handleQuizAnswer('D')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">D</button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1060,11 +1108,13 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                   // Quiz mode: Show retake/ask another question after 5 responses in quiz mode
                   if (!isQuizMode && quizResponseCount >= 5 && isQuizQuestionMessage(lastMessage.text)) {
                     return (
-                      <div className="flex justify-start items-end w-full">
-                        <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                        <div className="flex flex-wrap gap-2 max-w-[90vw] sm:max-w-xl">
-                          <button onClick={() => handleQuickResponse('I want to ask another question')} className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">I want to ask another question</button>
-                          <button onClick={() => handleQuickResponse('Retake the quiz')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">Retake the quiz</button>
+                      <div className="w-full max-w-6xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">What would you like to do next?</h3>
+                          <div className="flex flex-wrap gap-3">
+                            <button onClick={() => handleQuickResponse('I want to ask another question')} className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">Ask Another Question</button>
+                            <button onClick={() => handleQuickResponse('Retake the quiz')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">Retake the Quiz</button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1076,11 +1126,13 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                     const userQuizAnswers = messages.filter(m => m.sender === 'user' && ['A','B','C','D'].includes(m.text)).slice(-5);
                     if (userQuizAnswers.length === 5) {
                       return (
-                        <div className="flex justify-start items-end w-full">
-                          <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                          <div className="flex flex-wrap gap-2 max-w-[90vw] sm:max-w-xl">
-                            <button onClick={() => handleQuickResponse('I want to ask another question')} className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">I want to ask another question</button>
-                            <button onClick={() => handleQuickResponse('Retake the quiz')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">Retake the quiz</button>
+                        <div className="w-full max-w-6xl mx-auto">
+                          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">What would you like to do next?</h3>
+                            <div className="flex flex-wrap gap-3">
+                              <button onClick={() => handleQuickResponse('I want to ask another question')} className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">Ask Another Question</button>
+                              <button onClick={() => handleQuickResponse('Retake the quiz')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">Retake the Quiz</button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1091,11 +1143,13 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                   if (isFiveYearOldMode) {
                     if (fiveYearOldStep === 'after_explanation') {
                       return (
-                        <div className="flex justify-start items-end w-full">
-                          <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                          <div className="flex flex-wrap gap-2 max-w-[90vw] sm:max-w-xl">
-                            <button onClick={() => handleQuickResponse('I understand')} className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">✅ I understand</button>
-                            <button onClick={() => handleQuickResponse('explain with another example')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">🔄 Explain with another example</button>
+                        <div className="w-full max-w-6xl mx-auto">
+                          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Do you understand now?</h3>
+                            <div className="flex flex-wrap gap-3">
+                              <button onClick={() => handleQuickResponse('I understand')} className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">✅ I understand</button>
+                              <button onClick={() => handleQuickResponse('explain with another example')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">🔄 Explain with another example</button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1103,11 +1157,13 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                     
                     if (fiveYearOldStep === 'after_another_example') {
                       return (
-                        <div className="flex justify-start items-end w-full">
-                          <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                          <div className="flex flex-wrap gap-2 max-w-[90vw] sm:max-w-xl">
-                            <button onClick={() => handleQuickResponse('yes')} className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">✅ Yes</button>
-                            <button onClick={() => handleQuickResponse('no')} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">❌ No</button>
+                        <div className="w-full max-w-6xl mx-auto">
+                          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Did that example help?</h3>
+                            <div className="flex flex-wrap gap-3">
+                              <button onClick={() => handleQuickResponse('yes')} className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">✅ Yes</button>
+                              <button onClick={() => handleQuickResponse('no')} className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">❌ No</button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1117,11 +1173,13 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                   // After 5 quiz answers in autoQuizActive mode, show only 'I want to ask another question' and 'Retake the quiz' buttons
                   if (autoQuizActive && autoQuizCount >= 5) {
                     return (
-                      <div className="flex justify-start items-end w-full">
-                        <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                        <div className="flex flex-wrap gap-2 max-w-[90vw] sm:max-w-xl">
-                          <button onClick={() => handleQuickResponse('I want to ask another question')} className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">I want to ask another question</button>
-                          <button onClick={() => handleQuickResponse('Retake the quiz')} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md">Retake the quiz</button>
+                      <div className="w-full max-w-6xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">What would you like to do next?</h3>
+                          <div className="flex flex-wrap gap-3">
+                            <button onClick={() => handleQuickResponse('I want to ask another question')} className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">Ask Another Question</button>
+                            <button onClick={() => handleQuickResponse('Retake the quiz')} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md">Retake the Quiz</button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1129,85 +1187,93 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                   
                   // 3. After explanation, show four options
                   return (
-                    <div className="flex justify-start items-end w-full">
-                      <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                      <form
-                        className="flex flex-wrap gap-2 max-w-[90vw] sm:max-w-xl items-center mb-8 z-20 relative"
-                        style={{ paddingBottom: '1rem', justifyContent: 'flex-start' }}
-                        onSubmit={e => e.preventDefault()}
-                      >
-                        <label className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium transition-colors shadow-md cursor-pointer">
-                          <input
-                            type="radio"
-                            name="quick-response"
-                            value="I understand"
-                            checked={selectedQuickResponse === "I understand"}
-                            onChange={() => {
+                    <div className="w-full max-w-6xl mx-auto">
+                      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">What would you like to do next?</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <button 
+                            onClick={() => {
                               setSelectedQuickResponse("I understand");
                               handleQuickResponse("I understand");
                               setSelectedQuickResponse("");
                             }}
-                            className="accent-green-600"
-                          />
-                          <span>✅ I understand</span>
-                        </label>
-                        <label className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors shadow-md cursor-pointer">
-                          <input
-                            type="radio"
-                            name="quick-response"
-                            value="I want to take quiz"
-                            checked={selectedQuickResponse === "I want to take quiz"}
-                            onChange={() => {
+                            className="px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">✅</span>
+                              <div>
+                                <div className="font-semibold">I understand</div>
+                                <div className="text-green-100 text-xs">Ready to move on</div>
+                              </div>
+                            </div>
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
                               setSelectedQuickResponse("I want to take quiz");
                               handleQuickResponse("I want to take quiz");
                               setSelectedQuickResponse("");
                             }}
-                            className="accent-blue-600"
-                          />
-                          <span>🧠 I want to take quiz</span>
-                        </label>
-                        <label className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-full text-sm font-medium transition-colors shadow-md cursor-pointer">
-                          <input
-                            type="radio"
-                            name="quick-response"
-                            value="I want you to explain like a 5-year-old"
-                            checked={selectedQuickResponse === "I want you to explain like a 5-year-old"}
-                            onChange={() => {
+                            className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">🧠</span>
+                              <div>
+                                <div className="font-semibold">Take a quiz</div>
+                                <div className="text-blue-100 text-xs">Test your knowledge</div>
+                              </div>
+                            </div>
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
                               setSelectedQuickResponse("I want you to explain like a 5-year-old");
                               handleQuickResponse("I want you to explain like a 5-year-old");
                               setSelectedQuickResponse("");
                             }}
-                            className="accent-purple-600"
-                          />
-                          <span>👶 I want you to explain like a 5-year-old</span>
-                        </label>
-                        <label className="flex items-center gap-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-full text-sm font-medium transition-colors shadow-md cursor-pointer">
-                          <input
-                            type="radio"
-                            name="quick-response"
-                            value="Use a different approach"
-                            checked={selectedQuickResponse === "Use a different approach"}
-                            onChange={() => {
+                            className="px-6 py-4 bg-purple-400 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors shadow-md text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">👶</span>
+                              <div>
+                                <div className="font-semibold">Explain like I'm 5</div>
+                                <div className="text-purple-400 text-xs">Simpler explanation</div>
+                              </div>
+                            </div>
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
                               setSelectedQuickResponse("Use a different approach");
                               handleQuickResponse("Use a different approach");
                               setSelectedQuickResponse("");
                             }}
-                            className="accent-pink-600"
-                          />
-                          <span>🔄 Use a different approach</span>
-                        </label>
-                      </form>
+                            className="px-6 py-4 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">🔄</span>
+                              <div>
+                                <div className="font-semibold">Different approach</div>
+                                <div className="text-pink-100 text-xs">Try another method</div>
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   );
                 })()}
+                
                 {/* Loading indicator for Super Teacher response */}
                 {isLoading && (
-                  <div className="flex justify-start items-end w-full">
-                    <div className="mr-2 sm:mr-3">{aiAvatar}</div>
-                    <div className="relative max-w-[90vw] sm:max-w-xl px-4 sm:px-6 py-3 sm:py-4 rounded-3xl shadow-xl bg-gradient-to-br from-purple-200 to-pink-200 rounded-bl-2xl rounded-tl-3xl">
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
-                        <span className="text-gray-600 text-sm">Super Teacher is thinking...</span>
+                  <div className="w-full max-w-6xl mx-auto">
+                    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                      <div className="flex items-center space-x-3">
+                        <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                        <div>
+                          <div className="font-semibold text-gray-800">Super Teacher is thinking...</div>
+                          <div className="text-gray-500 text-sm">Crafting the perfect explanation for you</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1215,72 +1281,94 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                 <div ref={chatEndRef} />
               </div>
               
-                                {/* Chat input */}
+              {/* Comment input section */}
               <div className="w-full flex justify-center z-40 fixed bottom-0 left-0 pointer-events-none">
-                <form onSubmit={handleSend} className="w-full max-w-3xl flex flex-row items-end gap-3 bg-white/95 rounded-2xl shadow-2xl px-4 py-3 mx-auto border border-gray-200 pointer-events-auto">
-                  {/* Manual text input toggle button */}
-                  <button 
-                    type="button" 
-                    onClick={handleManualTextInputToggle}
-                    className={`p-2 rounded-full transition-all duration-200 relative group ${
-                      isManualTextInputEnabled 
-                        ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg' 
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-600'
-                    }`}
-                    title={isManualTextInputEnabled ? 'Disable keyboard mode' : 'Enable keyboard mode (bypass button restrictions)'}
-                  >
-                    {isManualTextInputEnabled ? (
-                      <MessageSquareOff className="w-5 h-5" />
-                    ) : (
-                      <MessageSquare className="w-5 h-5" />
-                    )}
-                    {/* Tooltip */}
-                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                      {isManualTextInputEnabled ? 'Disable keyboard mode' : 'Enable keyboard mode'}
-                    </span>
-                  </button>
-                  {/* Attachment button (future) */}
-                  <button type="button" disabled className="p-2 rounded-full text-gray-400 hover:bg-gray-100 transition" title="Attach file (coming soon)">
-                    <Paperclip className="w-5 h-5" />
-                  </button>
-                  {/* Multiline input */}
-                  <textarea
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    placeholder={
-                      isLoading 
-                        ? "Super Teacher is thinking..." 
-                        : !isTextInputEnabled && !isManualTextInputEnabled
-                          ? "Use the buttons above to continue..." 
-                          : isManualTextInputEnabled
-                            ? "Keyboard mode: Type your message..."
-                            : "Type your message..."
-                    }
-                    rows={1}
-                    maxLength={1000}
-                    disabled={isLoading || (!isTextInputEnabled && !isManualTextInputEnabled)}
-                    className="flex-1 resize-none bg-white rounded-xl px-5 py-4 text-lg sm:text-xl shadow-none border border-gray-200 focus:ring-2 focus:ring-blue-400 min-h-[48px] max-h-40 text-left transition placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ minHeight: '48px', maxHeight: '160px', overflowY: 'auto' }}
-                    onInput={e => {
-                      const target = e.target as HTMLTextAreaElement;
-                      target.style.height = '48px';
-                      target.style.height = Math.min(target.scrollHeight, 160) + 'px';
-                    }}
-                  />
-                  {/* Send button */}
-                  <button
-                    type="submit"
-                    className="p-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!input.trim() || isLoading || (!isTextInputEnabled && !isManualTextInputEnabled)}
-                    title="Send"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Send className="w-6 h-6" />
-                    )}
-                  </button>
-                </form>
+                <div className="w-full max-w-4xl flex flex-col items-center gap-3 bg-white/95 rounded-t-2xl shadow-2xl px-6 py-4 mx-auto border border-gray-200 pointer-events-auto">
+                  <div className="w-full flex items-end gap-3">
+                    {/* Manual text input toggle button */}
+                    <button 
+                      type="button" 
+                      onClick={handleManualTextInputToggle}
+                      className={`p-2 rounded-full transition-all duration-200 relative group ${
+                        isManualTextInputEnabled 
+                          ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg' 
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-600'
+                      }`}
+                      title={isManualTextInputEnabled ? 'Disable keyboard mode' : 'Enable keyboard mode (bypass button restrictions)'}
+                    >
+                      {isManualTextInputEnabled ? (
+                        <MessageSquareOff className="w-5 h-5" />
+                      ) : (
+                        <MessageSquare className="w-5 h-5" />
+                      )}
+                      {/* Tooltip */}
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                        {isManualTextInputEnabled ? 'Disable keyboard mode' : 'Enable keyboard mode'}
+                      </span>
+                    </button>
+                    
+                    {/* Attachment button (future) */}
+                    <button type="button" disabled className="p-2 rounded-full text-gray-400 hover:bg-gray-100 transition" title="Attach file (coming soon)">
+                      <Paperclip className="w-5 h-5" />
+                    </button>
+                    
+                    {/* Comment input */}
+                    <form onSubmit={handleSend} className="flex-1 flex items-end gap-3">
+                      <textarea
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        placeholder={
+                          isLoading 
+                            ? "Super Teacher is thinking..." 
+                            : !isTextInputEnabled && !isManualTextInputEnabled
+                              ? "Use the buttons above to continue..." 
+                              : isManualTextInputEnabled
+                                ? "Keyboard mode: Type your message..."
+                                : "Add a comment or ask a question..."
+                        }
+                        rows={1}
+                        maxLength={1000}
+                        disabled={isLoading || (!isTextInputEnabled && !isManualTextInputEnabled)}
+                        className="flex-1 resize-none bg-gray-50 rounded-xl px-4 py-3 text-base shadow-none border border-gray-200 focus:ring-2 focus:ring-blue-400 min-h-[48px] max-h-40 text-left transition placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ minHeight: '48px', maxHeight: '160px', overflowY: 'auto' }}
+                        onInput={e => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = '48px';
+                          target.style.height = Math.min(target.scrollHeight, 160) + 'px';
+                        }}
+                      />
+                      
+                      {/* Send button */}
+                      <button
+                        type="submit"
+                        className="p-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!input.trim() || isLoading || (!isTextInputEnabled && !isManualTextInputEnabled)}
+                        title="Send"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Send className="w-6 h-6" />
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                  
+                  {/* Input status */}
+                  <div className="w-full text-center">
+                    <div className="text-xs text-gray-500">
+                      {isManualTextInputEnabled && (
+                        <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full mr-2">
+                          <MessageSquare className="w-3 h-3" />
+                          Keyboard Mode Active
+                        </span>
+                      )}
+                      {!isTextInputEnabled && !isManualTextInputEnabled && (
+                        <span className="text-gray-400">Use the buttons above to continue the conversation</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
