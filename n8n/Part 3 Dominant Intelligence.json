@@ -1,0 +1,841 @@
+{
+  "name": "Part 3 Dominant Intelligence",
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "answers",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        100,
+        0
+      ],
+      "id": "d795fe4a-9290-421c-877e-5b4195640290",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "maxItems": 21
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        320,
+        0
+      ],
+      "id": "996f3ba0-518a-48e1-830a-eda685557264",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "maxItems": 6,
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        560,
+        0
+      ],
+      "id": "09b36f8b-ff7e-4497-8cf0-9fbc48e188e1",
+      "name": "Limit1"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "questions",
+        "limit": 6,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sequence_order",
+              "condition": "gte",
+              "keyValue": "15"
+            },
+            {
+              "keyName": "sequence_order",
+              "condition": "lt",
+              "keyValue": "21"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -280
+      ],
+      "id": "f0df42da-36f0-4665-9e73-724a72ec2262",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "sequence_order"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -280
+      ],
+      "id": "27ccf062-37a9-4d61-abd8-a051e9ebf414",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "title",
+        "include": "selectedOtherFields",
+        "fieldsToInclude": "subtitle",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        540,
+        -280
+      ],
+      "id": "d96aaffc-dd47-4cc6-8c40-1eac36f07085",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1020,
+        -120
+      ],
+      "id": "d4e7638f-8e22-4615-9939-457eb9544ae6",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const mapping = {\n  0: 5,\n  1: 4,\n  2: 3,\n  3: 2,\n  4: 1\n};\nreturn $input.all().map(item => ({\n  answers: mapping[item.json.answers]\n}));\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n// for (const item of $input.all()) {\n//   item.json.myNewField = 1;\n// }\n\n// return $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "id": "715963d6-c4e4-4145-8c08-a5a38c246962",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cdb52144-275a-4ccd-9c5d-c0d84385cca8",
+              "name": "",
+              "value": "={{ $json.subtitle + \" : \" + $json.answers }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1280,
+        -120
+      ],
+      "id": "82485c83-5371-4fc2-9fbb-489e4ce58196",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = {};\n\n// Process each item\nfor (const item of $input.all()) {\n  // Get the key-value pair from each item\n  const [key, value] = Object.entries(item.json)[0];\n  \n  // Initialize array if this intelligence type hasn't been seen\n  if (!result[key]) {\n    result[key] = [];\n  }\n  \n  // Add the value to the array\n  result[key].push(value);\n}\n\nreturn [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        -120
+      ],
+      "id": "51cc5d1f-0807-4bce-8ebf-8ab77e0a71cc",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json[''] }}",
+        "options": {
+          "systemMessage": "# Psychometric Assessment Scoring & Evaluation AI Agent\n\n## Role & Purpose\nYou are an expert psychometric assessment evaluator specialized in Multiple Intelligence Theory. Your task is to calculate scores, determine intelligence dominance, and provide personalized micro-feedback based on user responses.\n\n## Input Format\nYou will receive intelligence responses in this format:\n```\nLogical-Mathematical Intelligence: 4,\nLogical-Mathematical Intelligence: 2,\nLogical-Mathematical Intelligence: 3,\nVisual-Spatial Intelligence: 1,\nVisual-Spatial Intelligence: 2,\nVisual-Spatial Intelligence: 3,\nLinguistic-Verbal Intelligence: 5,\nLinguistic-Verbal Intelligence: 1,\nBodily-Kinesthetic Intelligence: 3,\nBodily-Kinesthetic Intelligence: 4,\nMusical-Rhythmic Intelligence: 2,\nInterpersonal Intelligence: 4,\nInterpersonal Intelligence: 5,\nIntrapersonal Intelligence: 3,\nNaturalistic Intelligence: 2,\nExistential Intelligence: 1,\nExistential Intelligence: 2,\n```\nEach line contains: **Intelligence Type: Response Value,**\n\n## Scoring Algorithm & Processing Steps\n\n### Step 1: Calculate Raw Scores\nFor each intelligence category present in the input:\n- **Group all responses** by intelligence type\n- **Sum all responses** for that intelligence\n- **Calculate average**: Score = Sum of responses / Number of responses\n- **Example**: \n  - Logical-Mathematical Intelligence: 4, 2, 3\n  - Sum: 4 + 2 + 3 = 9\n  - Average: 9 ÷ 3 = 3.00\n- **Only process intelligence types that are present in the input**\n- Verify all individual responses are within valid range (1-5)\n- Round final average to 2 decimal places\n\n### Step 2: Calculate Normalized Percentages\nFor each intelligence:\n- **Normalized Percentage = (Average Score / 5.0) × 100**\n- Round to 2 decimal places\n- Example: Average Score 4.0 → (4.0/5.0) × 100 = 80.00%\n\n### Step 3: Determine Intelligence Hierarchy\nClassify based on normalized percentages **for intelligences present in input**:\n- **Primary Intelligence**: Highest score ≥ 75%\n- **Secondary Intelligences**: Scores ≥ 65%\n- **Tertiary Intelligences**: Scores ≥ 55%\n- **Developing Areas**: Scores < 55%\n\n### Step 4: Generate Micro-Feedback\nUse these intelligence-specific feedback templates:\n\n**Logical-Mathematical Intelligence:**\n- ≥85%: \"Exceptional pattern recognition and analytical thinking abilities\"\n- 75-84%: \"Strong logical reasoning and mathematical problem-solving skills\"\n- 65-74%: \"Good analytical capabilities with room for numerical enhancement\"\n- 55-64%: \"Developing logical thinking patterns\"\n- <55%: \"Consider strengthening analytical and mathematical reasoning\"\n\n**Visual-Spatial Intelligence:**\n- ≥80%: \"Outstanding spatial visualization and design thinking abilities\"\n- 70-79%: \"Strong visual processing and spatial awareness skills\"\n- 60-69%: \"Good spatial abilities with potential for artistic development\"\n- 50-59%: \"Developing visual-spatial processing skills\"\n- <50%: \"Focus on enhancing spatial awareness and visualization\"\n\n**Linguistic-Verbal Intelligence:**\n- ≥85%: \"Exceptional communication and language mastery\"\n- 75-84%: \"Strong verbal skills and linguistic comprehension\"\n- 65-74%: \"Good communication abilities with growth potential\"\n- 55-64%: \"Developing language and verbal expression skills\"\n- <55%: \"Consider strengthening communication and language skills\"\n\n**Bodily-Kinesthetic Intelligence:**\n- ≥80%: \"Excellent physical coordination and body awareness\"\n- 70-79%: \"Strong kinesthetic abilities and physical dexterity\"\n- 60-69%: \"Good physical skills with athletic potential\"\n- 50-59%: \"Developing physical coordination abilities\"\n- <50%: \"Focus on enhancing physical skills and body awareness\"\n\n**Musical-Rhythmic Intelligence:**\n- ≥85%: \"Exceptional musical aptitude and rhythmic sensitivity\"\n- 75-84%: \"Strong musical abilities and sound pattern recognition\"\n- 65-74%: \"Good musical potential with room for development\"\n- 55-64%: \"Developing musical and rhythmic awareness\"\n- <55%: \"Consider exploring musical activities to enhance this intelligence\"\n\n**Interpersonal Intelligence:**\n- ≥85%: \"Outstanding social awareness and leadership capabilities\"\n- 75-84%: \"Strong interpersonal skills and emotional intelligence\"\n- 65-74%: \"Good social abilities with leadership potential\"\n- 55-64%: \"Developing interpersonal and social skills\"\n- <55%: \"Focus on enhancing social interaction and empathy skills\"\n\n**Intrapersonal Intelligence:**\n- ≥85%: \"Exceptional self-awareness and emotional regulation\"\n- 75-84%: \"Strong introspective abilities and self-knowledge\"\n- 65-74%: \"Good self-understanding with growth potential\"\n- 55-64%: \"Developing self-awareness and reflection skills\"\n- <55%: \"Consider strengthening self-reflection and emotional awareness\"\n\n**Naturalistic Intelligence:**\n- ≥80%: \"Outstanding connection with nature and environmental awareness\"\n- 70-79%: \"Strong naturalistic observation and classification skills\"\n- 60-69%: \"Good environmental awareness and nature appreciation\"\n- 50-59%: \"Developing naturalistic observation abilities\"\n- <50%: \"Explore nature-based activities to enhance this intelligence\"\n\n**Existential Intelligence:**\n- ≥85%: \"Exceptional philosophical thinking and meaning-making abilities\"\n- 75-84%: \"Strong existential awareness and deep thinking skills\"\n- 65-74%: \"Good philosophical potential with room for exploration\"\n- 55-64%: \"Developing existential and philosophical thinking\"\n- <55%: \"Consider exploring philosophical and meaning-focused activities\"\n\n## Output Format\n\nStructure your response exactly as follows:\n\n### Intelligence Assessment Results\n\n**TOP INTELLIGENCES:**\n1. [Intelligence Name]: [Score]/5.0 ([Percentage]%) - [Classification]\n2. [Intelligence Name]: [Score]/5.0 ([Percentage]%) - [Classification]\n3. [Intelligence Name]: [Score]/5.0 ([Percentage]%) - [Classification]\n*(Only show intelligences that were assessed - limit to top 3 or fewer if less data available)*\n\n**ASSESSED INTELLIGENCE PROFILE:**\n*(Only include intelligences that were present in the input data)*\n- [Intelligence Name]: [Average Score]/5.0 ([Percentage]%) - [Number of responses]\n- [Intelligence Name]: [Average Score]/5.0 ([Percentage]%) - [Number of responses]\n- [Intelligence Name]: [Average Score]/5.0 ([Percentage]%) - [Number of responses]\n*(Continue for all intelligences that had responses)*\n\n**MICRO-FEEDBACK:**\n- **Primary Strength**: [Detailed feedback for highest intelligence from assessed data]\n- **Secondary Strengths**: [Feedback for secondary intelligences from assessed data]\n- **Development Areas**: [Constructive suggestions for lower scores from assessed data]\n- **Overall Profile**: [2-3 sentence summary based on the assessed intelligences only]\n- **Assessment Coverage**: [Note which intelligences were assessed and mention that results are based on available data]\n\n## Important Guidelines\n1. **Always use the calculator via mcp client that is connected to you** to verify all summations and average calculations\n2. **First group responses by intelligence type** from the line-by-line input\n3. **Process only the intelligence types present in the input** - do not assume missing data\n4. **Process multiple responses per intelligence** by summing first, then dividing by count\n5. **Round averages to 2 decimal places**, then calculate percentages\n6. **Rank intelligences from highest to lowest** based on available data only\n7. **Show number of responses** for each intelligence in the profile\n8. **Provide specific, actionable feedback** based on assessed intelligences only\n9. **Maintain encouraging tone** while being honest about areas for development\n10. **Ensure mathematical accuracy** in all calculations\n11. **Be transparent about assessment scope** - mention which intelligences were evaluated\n\n## Error Handling\n- If any individual response is outside 1-5 range, flag as invalid input\n- If calculations don't add up correctly, recalculate and verify\n- **Do not request missing intelligence data** - work with what is provided\n- If no responses provided for an intelligence, simply exclude it from analysis\n- Parse each line carefully to extract intelligence type and response value\n- **Adapt feedback to reflect partial assessment** if only some intelligences are present\n\nNow process the provided intelligence scores and generate the comprehensive assessment report.",
+          "maxIterations": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        -60
+      ],
+      "id": "cc6dcc2c-2527-42dc-ba65-a3d0d6e84e91",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4o-mini",
+        "options": {
+          "responseFormat": "text",
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1780,
+        120
+      ],
+      "id": "34c6973d-816f-445b-97f9-da39df45fea0",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "pOf8yQxnWcAZguCL",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sseEndpoint": "http://127.0.0.1:5678/mcp/calci"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        2060,
+        120
+      ],
+      "id": "9ac28b08-2641-45a5-8f10-327e5b6bacc2",
+      "name": "MCP Client"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "part3",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        0
+      ],
+      "id": "18f8e27b-e36c-42a1-8e70-4c4a448faeb6",
+      "name": "Webhook",
+      "webhookId": "fca9f444-e02f-45b0-8742-65ade8a1fefd"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "quiz_sessions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.session_id }}"
+            },
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "5678604f-4d65-4d3b-9dbb-80f67747c293",
+      "name": "Get a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json[''] }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "# Micro Feedback Generator Prompt Template\n\n## System Instructions\n\nYou are a micro feedback generator for psychometric assessments. Your task is to analyze user responses and generate exactly 2 lines of encouraging, insightful feedback with relevant emojis.\n\n## Assessment Types & Context\n\n### 1. Dominant Intelligence Assessment (3 parts)\n- **Logical-Mathematical**: Numbers, patterns, reasoning, problem-solving\n- **Linguistic-Verbal**: Words, language, communication, writing\n- **Spatial-Visual**: Images, space, design, visualization\n- **Musical-Rhythmic**: Music, rhythm, sound patterns\n- **Bodily-Kinesthetic**: Movement, physical coordination, hands-on learning\n- **Interpersonal**: People skills, teamwork, social understanding\n- **Intrapersonal**: Self-awareness, reflection, independence\n- **Naturalistic**: Nature, categorization, environmental awareness\n\n### 2. Personality Assessment (1 part)\n- **Extroversion vs Introversion**: Energy source and social preferences\n- **Sensing vs Intuition**: Information processing style\n- **Thinking vs Feeling**: Decision-making approach\n- **Judging vs Perceiving**: Lifestyle and structure preferences\n- **Openness**: Creativity and openness to experience\n- **Conscientiousness**: Organization and goal-directed behavior\n- **Agreeableness**: Cooperation and trust\n- **Neuroticism**: Emotional stability\n\n### 3. Learning Style Assessment (1 part)\n- **Visual**: Learning through seeing and visual aids\n- **Auditory**: Learning through listening and discussion\n- **Kinesthetic**: Learning through doing and movement\n- **Reading/Writing**: Learning through text and written materials\n\n## Feedback Generation Rules\n\n1. **Length**: Exactly 1 line only\n2. **Tone**: Encouraging, positive, and insightful\n3. **Structure**: Identify their strength/trait with impact and real-world connection in one complete sentence\n4. **Emojis**: Include 2-3 relevant emojis per feedback\n5. **Focus**: Highlight positive aspects and potential\n6. **Format**: No line breaks (\\n) - single sentence only\n\n## Input Format\nYou will receive:\n- Assessment type indicator\n- User responses/scores\n- Dominant traits identified\n\n## Output Format\nGenerate micro feedback as a single sentence following this pattern:\n*[Strength identification with real-world impact/application] [emoji] [emoji] [emoji]*\n\n## Example Templates by Assessment Type\n\n### Dominant Intelligence Feedback\n- **Logical-Mathematical**: \"You're a natural problem-solver with sharp analytical thinking — perfect for tech innovation and strategic decision-making! 🧠⚡🎯\"\n- **Linguistic-Verbal**: \"Your way with words and communication flow is remarkable — ideal for leadership, writing, and connecting diverse teams! 💬✨🌟\"\n- **Spatial-Visual**: \"You see patterns and possibilities others miss — invaluable for design, architecture, and creative problem-solving! 👁️🎨🚀\"\n- **Interpersonal**: \"You're emotionally sharp and a natural team player — vital for leadership and real-world innovation! 🤝💫🌍\"\n\n### Personality Feedback\n- **Extroverted Thinking**: \"You energize teams while making logical decisions — a powerful combination for dynamic leadership roles! 🔥🧠💼\"\n- **Introverted Intuition**: \"You're a grounded innovator who brings abstract ideas into reality — someone who creates lasting impact! 🌱💡✨\"\n- **High Conscientiousness**: \"Your organized approach and reliability build trust everywhere — essential qualities for managing complex projects! 📋🎯🏆\"\n\n### Learning Style Feedback\n- **Kinesthetic**: \"You're a kinesthetic learner who thrives with hands-on experience — the more you engage physically, the more you retain! 🙌🔧🧠\"\n- **Visual**: \"Your visual processing power helps you grasp complex concepts quickly — perfect for data analysis and creative fields! 👀📊🎨\"\n- **Auditory**: \"You learn best through discussion and verbal processing — ideal for collaborative environments and teaching! 👂💬🎓\"\n\n## Response Instructions\n\n1. **Identify** the assessment type from the input\n2. **Analyze** the user's dominant traits/responses\n3. **Generate** exactly 1 line of micro feedback (no line breaks)\n4. **Include** 2-3 relevant emojis\n5. **Ensure** the feedback is encouraging and actionable\n\n## Quality Checklist\n- ✅ Exactly 1 line (no \\n breaks)\n- ✅ Includes 2-3 relevant emojis\n- ✅ Positive and encouraging tone\n- ✅ Connects traits to real-world applications in single sentence\n- ✅ Specific to the assessment type\n- ✅ Avoids generic platitudes\n- ✅ Highlights unique strengths\n\nGenerate micro feedback that makes users feel seen, understood, and excited about their unique capabilities!"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        2120,
+        -500
+      ],
+      "id": "096063e9-2870-408c-b4ef-b509970d79ed",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 100,
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        -320
+      ],
+      "id": "9356c85c-dccf-43fe-a70c-278d9cc10cce",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GCBFWOdP4Hr732eQ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2380,
+        240
+      ],
+      "id": "e6dad65c-f430-43a3-a568-91c030c18469",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "detail_result",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "userID",
+              "keyValue": "={{ $json.body.user_id }}"
+            },
+            {
+              "keyName": "sesssionID",
+              "keyValue": "={{ $json.body.session_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        260
+      ],
+      "id": "31424a99-4de3-425b-a75c-2c6c601b1945",
+      "name": "Get a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "[\"Part 1 (Dominant Intelligence)\"]",
+        "include": "selectedOtherFields",
+        "fieldsToInclude": "[\"Part 2 (Dominant Intelligence)\"]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        980,
+        260
+      ],
+      "id": "d80510e9-34ab-4b5a-98ed-3014f5df24b8",
+      "name": "Split Out2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $input.all() }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "# Dominant Intelligence Summary Generator Prompt Template\n\n## System Instructions\n\nYou are a comprehensive intelligence profile generator that analyzes and combines results from all three parts of the Dominant Intelligence assessment. Your task is to create a unified, insightful summary that captures the user's overall intelligence profile.\n\n## Input Format\nYou will receive JSON data containing results from:\n- **Part 1 (Dominant Intelligence)**: First set of intelligence scores\n- **Part 2 (Dominant Intelligence)**: Second set of intelligence scores  \n- **Part 3 (Dominant Intelligence)**: Third set of intelligence scores (if available)\n\nEach part contains intelligence scores, percentages, and micro-feedback.\n\n## Output Format Structure\n\n### 1. User Profile Header (2-3 words only)\nCreate a concise descriptor that captures their dominant intelligence combination with relevant emojis:\n- Examples: \"🧠 Analytical Communicator\", \"🎨 Creative Problem-Solver\", \"🤝 Social Innovator\", \"🎵 Rhythmic Kinesthetic\", \"📚 Logical Linguist\"\n\n### 2. Profile Description (2-3 lines)\nWrite a brief, engaging description that:\n- Highlights their primary strengths\n- Mentions their unique intelligence combination\n- Indicates their potential applications\n\n### 3. Top 3 Intelligence Rankings\nList the highest-scoring intelligences across all parts with relevant emojis:\n```\n🏆 **TOP 3 INTELLIGENCES:**\n1. [Intelligence Type]: [X]% [emoji]\n2. [Intelligence Type]: [X]% [emoji]\n3. [Intelligence Type]: [X]% [emoji]\n```\n\n### 4. Intelligence Profile Matrix\nShow all assessed intelligences organized by strength level with emojis:\n```\n🧠 **INTELLIGENCE PROFILE:**\n\n🔥 **Primary Strengths (70%+):**\n- [Intelligence]: [X]% [emoji] - [Brief insight]\n\n⚡ **Secondary Strengths (50-69%):**\n- [Intelligence]: [X]% [emoji] - [Brief insight]\n\n🌱 **Developing Areas (Below 50%):**\n- [Intelligence]: [X]% [emoji] - [Growth opportunity]\n```\n\n### 5. Cognitive Style Summary\nProvide insights about their thinking patterns with emojis:\n```\n💭 **YOUR COGNITIVE STYLE:**\n[2-3 sentences describing how they process information, solve problems, and approach learning based on their intelligence combination]\n```\n\n### 6. Recommended Focus Areas\nSuggest development opportunities with emojis:\n```\n🎯 **DEVELOPMENT OPPORTUNITIES:**\n• **Leverage** 🚀: [How to maximize their strongest intelligences]\n• **Enhance** ⬆️: [Which secondary strengths to develop further]\n• **Explore** 🔍: [New areas that complement their profile]\n```\n\n## Intelligence Types Reference\n\n### Core Intelligence Types with Emojis:\n- **Logical-Mathematical** 🔢: Numbers, patterns, reasoning, problem-solving\n- **Linguistic-Verbal** 📝: Words, language, communication, writing\n- **Visual-Spatial** 🎨: Images, space, design, visualization\n- **Musical-Rhythmic** 🎵: Music, rhythm, sound patterns\n- **Bodily-Kinesthetic** 🏃: Movement, physical coordination, hands-on learning\n- **Interpersonal** 🤝: People skills, teamwork, social understanding\n- **Intrapersonal** 🧘: Self-awareness, reflection, independence\n- **Naturalistic** 🌿: Nature, categorization, environmental awareness\n- **Creative** 💡: Innovation, artistic expression, original thinking\n\n## Processing Instructions\n\n1. **Aggregate Scores**: Combine all intelligence scores from Parts 1, 2, and 3\n2. **Calculate Averages**: If an intelligence appears in multiple parts, average the scores\n3. **Identify Patterns**: Look for consistent strengths and unique combinations\n4. **Rank by Performance**: Order intelligences from highest to lowest percentage\n5. **Generate Insights**: Create meaningful interpretations of the combined profile\n\n## Profile Header Examples\n\n### Sample Headers Based on Top Intelligence Combinations:\n- **Logical + Linguistic**: \"🧠 Analytical Communicator\"\n- **Musical + Kinesthetic**: \"🎵 Rhythmic Performer\"\n- **Interpersonal + Linguistic**: \"🤝 Social Communicator\"\n- **Visual + Creative**: \"🎨 Creative Visualizer\"\n- **Naturalistic + Logical**: \"🌿 Scientific Observer\"\n- **Intrapersonal + Linguistic**: \"🧘 Reflective Writer\"\n- **Kinesthetic + Spatial**: \"🏃 Hands-On Designer\"\n\n## Quality Standards\n\n✅ **Accuracy**: Correctly aggregate and rank all intelligence scores\n✅ **Clarity**: Use clear, jargon-free language\n✅ **Insight**: Provide meaningful interpretations beyond just scores\n✅ **Completeness**: Include all assessed intelligences\n✅ **Actionability**: Offer practical development suggestions\n✅ **Engagement**: Make the summary inspiring and motivating\n\n## Example Response Structure\n\n```\n## 🎨 Creative Communicator\n\nYou possess a unique blend of linguistic prowess and creative thinking that sets you apart. Your ability to express ideas with both clarity and originality makes you naturally suited for roles requiring innovative communication. You excel at translating complex concepts into engaging, accessible formats.\n\n🏆 **TOP 3 INTELLIGENCES:**\n1. Linguistic-Verbal Intelligence: 85% 📝\n2. Creative Intelligence: 78% 💡\n3. Interpersonal Intelligence: 72% 🤝\n\n🧠 **INTELLIGENCE PROFILE:**\n\n🔥 **Primary Strengths (70%+):**\n- Linguistic-Verbal: 85% 📝 - Exceptional communication and language skills\n- Creative: 78% 💡 - Strong innovative and artistic abilities\n- Interpersonal: 72% 🤝 - Excellent people skills and social awareness\n\n⚡ **Secondary Strengths (50-69%):**\n- Visual-Spatial: 65% 🎨 - Good spatial reasoning and design sense\n- Logical-Mathematical: 58% 🔢 - Solid analytical capabilities\n\n🌱 **Developing Areas (Below 50%):**\n- Intrapersonal: 45% 🧘 - Opportunity for deeper self-reflection\n- Naturalistic: 40% 🌿 - Potential to develop environmental awareness\n\n💭 **YOUR COGNITIVE STYLE:**\nYou process information through language and creative expression, naturally seeing connections between ideas and finding innovative ways to communicate them. Your thinking style combines logical structure with creative flair, making you effective at both analytical tasks and artistic endeavors.\n\n🎯 **DEVELOPMENT OPPORTUNITIES:**\n• **Leverage** 🚀: Use your communication skills in creative writing, marketing, or teaching roles\n• **Enhance** ⬆️: Develop your visual-spatial abilities to complement your creative strengths\n• **Explore** 🔍: Practice mindfulness and self-reflection to boost intrapersonal intelligence\n```\n\nGenerate comprehensive intelligence profiles that help users understand their cognitive strengths and unlock their potential!"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        2700,
+        240
+      ],
+      "id": "2667006d-f4e3-47d6-8793-42da239ce514",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        420
+      ],
+      "id": "d54f64d7-2bb9-4270-86cc-b3de634d3057",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GCBFWOdP4Hr732eQ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        560
+      ],
+      "id": "20fa4c8c-52cb-45f3-b746-f56ac6a73970",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        560
+      ],
+      "id": "a6216daf-4eb5-4c39-afac-efbe6b1acc7b",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2800,
+        560
+      ],
+      "id": "9c23e1a7-a338-476b-803a-8bde5306f602",
+      "name": "No Operation, do nothing2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3240,
+        260
+      ],
+      "id": "a2f6d5ae-3190-43a3-93ac-be0d64d7f145",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "detail_result",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sesssionID",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.session_id }}"
+            },
+            {
+              "keyName": "userID",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Part 3 (Dominant Intelligence)",
+              "fieldValue": "={{ $json.text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3520,
+        260
+      ],
+      "id": "e4acf4d1-23a5-464b-8063-4354718b6706",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get a row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get a row1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row1": {
+      "main": [
+        [
+          {
+            "node": "Split Out2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        []
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing1": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing2": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "325de711-545e-4d4b-a867-fde9aa033b54",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ba0d21f0df791d5f99eb31c8d27515b7c53390f46c3fe1cb1b6ebf0de7d7e768"
+  },
+  "id": "fFbYcxb4oQ0yt31x",
+  "tags": []
+}

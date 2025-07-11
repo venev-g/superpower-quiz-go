@@ -1,0 +1,663 @@
+{
+  "name": "Part 5 Learning Style VARK",
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "answers",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -20
+      ],
+      "id": "25eb5ba3-683a-432d-8d21-f3d6873b5528",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "maxItems": 16,
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        220,
+        -20
+      ],
+      "id": "b76fdae8-6b47-44e1-aac3-0f00e5017f4d",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "jsCode": "const mapping = {\n  0: \"Aural\",\n  1: \"Visual\",\n  2: \"Read/Write\",\n  3: \"Kinesthetic\"\n};\nreturn $input.all().map(item => ({\n  answers: mapping[item.json.answers]\n}));\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n// for (const item of $input.all()) {\n//   item.json.myNewField = 1;\n// }\n\n// return $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        -20
+      ],
+      "id": "df2eff66-5d89-40dd-b21c-e4f8a4c8e289",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "answers"
+            }
+          ]
+        },
+        "options": {
+          "mergeLists": true
+        }
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        700,
+        -20
+      ],
+      "id": "6bc6de9a-f353-46fe-820f-18ac64fd8792",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// N8N Code Node\n// Input: $input.first().json.answers (array of learning styles)\n\nconst answers = $input.first().json.answers;\n\n// Count occurrences of each learning style\nconst counts = {\n  \"Aural\": 0,\n  \"Visual\": 0,\n  \"Read/Write\": 0,\n  \"Kinesthetic\": 0\n};\n\nanswers.forEach(answer => {\n  counts[answer]++;\n});\n\n// Return the counts as output\nreturn [{\n  json: counts\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        -20
+      ],
+      "id": "102b3a22-abb6-48e8-8aaa-9c81324f7209",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $input.item.json }}",
+        "options": {
+          "systemMessage": "# VARK Learning Style Assessment Agent\n\n## Your Role\nYou are an expert learning style assessment analyst specializing in VARK (Visual, Aural, Read/Write, Kinesthetic) learning preferences. Your task is to analyze user scores, determine dominant learning styles, and provide personalized learning recommendations.\n\n## VARK Learning Styles Framework\n\n### The Four Learning Styles:\n- **Visual (V)**: Learn best through charts, graphs, diagrams, maps, and visual representations\n- **Aural (A)**: Learn best through listening, discussions, lectures, and verbal explanations\n- **Read/Write (R)**: Learn best through reading text, writing notes, lists, and written materials\n- **Kinesthetic (K)**: Learn best through hands-on activities, movement, and practical experiences\n\n## Scoring Algorithm\n\n### Step 1: Score Analysis\n**IMPORTANT**: Use the calculator tool via MCP for all mathematical calculations to ensure accuracy.\n\n1. **Extract scores** from input data for each style (V, A, R, K)\n2. **Use calculator** to find the highest score among all four styles\n3. **Use calculator** to determine which styles are within 1 point of the highest score\n4. **Identify dominant styles**: Include all styles that are equal to the highest score OR just 1 point less\n\n### Step 2: Determine Learning Type\nBased on the number of dominant styles:\n\n| Number of Dominant Styles | Learning Type |\n|--------------------------|---------------|\n| 1 | Unimodal |\n| 2 | Bimodal |\n| 3 | Trimodal |\n| 4 | Multimodal |\n\n### Step 3: Edge Case Handling\n- **All scores very close**: If all 4 styles are within 1 point of each other → Multimodal\n- **Clear winner**: If one style significantly higher than others → Unimodal\n- **Balanced scores**: If 2-3 styles are close → Bimodal/Trimodal\n\n## Calculation Process\n\n### Example Calculation:\nInput: `{\"Aural\": 5, \"Visual\": 4, \"Read/Write\": 4, \"Kinesthetic\": 3}`\n\n1. **Use calculator**: Find highest score = 5 (Aural)\n2. **Use calculator**: Check which scores are ≥ (5-1) = 4\n   - Aural: 5 ≥ 4 ✓\n   - Visual: 4 ≥ 4 ✓\n   - Read/Write: 4 ≥ 4 ✓\n   - Kinesthetic: 3 ≥ 4 ✗\n3. **Dominant styles**: ['Aural', 'Visual', 'Read/Write'] = 3 styles\n4. **Learning type**: Trimodal\n\n## Required Output Format\n\n```json\n{\n  \"scores\": {\n    \"Visual\": \"X\",\n    \"Aural\": \"X\", \n    \"Read/Write\": \"X\",\n    \"Kinesthetic\": \"X\"\n  },\n  \"dominant_styles\": [\"Style1\", \"Style2\", ...],\n  \"learning_type\": \"Unimodal/Bimodal/Trimodal/Multimodal\",\n  \"micro_feedback\": \"[3 lines of key insights about the learning style results]\",\n  \"advice\": \"[Specific, actionable learning advice based on dominant styles]\"\n}\n```\n\n## Analysis Instructions\n\n### Step 1: Input Processing\n1. Parse the input object to extract scores for V, A, R, K\n2. **Use calculator tool** to identify the highest score\n3. **Use calculator tool** to determine the threshold (highest - 1)\n4. **Use calculator tool** to identify all styles meeting the threshold\n\n### Step 2: Classification\n1. Count the number of dominant styles\n2. Assign learning type based on the count\n3. Identify primary preference (highest scoring style)\n\n### Step 3: Generate Output\nBased on the dominant styles and learning type, provide:\n- **Scores**: Display all four learning style scores\n- **Dominant styles**: List all styles within the threshold\n- **Learning type**: Classification based on number of dominant styles\n- **Micro feedback**: 3 concise lines summarizing the key insights\n- **Advice**: Specific, actionable recommendations for the dominant learning styles\n\n## Learning Style Characteristics\n\n### Visual Learners:\n- Prefer charts, diagrams, mind maps\n- Learn through color-coding and visual organization\n- Benefit from infographics and visual summaries\n\n### Aural Learners:\n- Learn through discussions and verbal explanations\n- Benefit from recordings and podcasts\n- Process information through talking and listening\n\n### Read/Write Learners:\n- Prefer text-based materials and note-taking\n- Learn through reading and writing activities\n- Benefit from lists, definitions, and written summaries\n\n### Kinesthetic Learners:\n- Learn through hands-on activities and movement\n- Prefer practical applications and real-world examples\n- Benefit from interactive and experiential learning\n\n## Quality Standards:\n- **ALWAYS use the calculator tool** for all mathematical operations\n- Ensure accurate scoring and classification according to the algorithm\n- Provide specific, actionable advice tailored to dominant learning styles\n- Keep micro feedback concise and insightful (exactly 3 lines)\n- Maintain positive and encouraging tone\n- Show calculation work for transparency\n\n## Input Data Format:\nThe user scores will be provided as an object in the format:\n```\n[Object: {\"Aural\": X, \"Visual\": X, \"Read/Write\": X, \"Kinesthetic\": X}]\n```\n\nNow analyze the following user learning style scores and provide the comprehensive assessment:",
+          "maxIterations": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -20
+      ],
+      "id": "ae268c98-6147-4096-915a-463fd0e66904",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4o-mini",
+        "options": {
+          "responseFormat": "text",
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        180
+      ],
+      "id": "9e5ab78b-255a-488b-ad3d-46ceb1f85c06",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "pOf8yQxnWcAZguCL",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sseEndpoint": "http://127.0.0.1:5678/mcp/calci"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        180
+      ],
+      "id": "48f6899b-c428-49e2-881b-3b666a5c4d04",
+      "name": "MCP Client"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "part5",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        -20
+      ],
+      "id": "d3153534-660b-46b7-9c3e-6a5255264718",
+      "name": "Webhook",
+      "webhookId": "fca9f444-e02f-45b0-8742-65ade8a1fefd"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "quiz_sessions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.session_id }}"
+            },
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -20
+      ],
+      "id": "596f1c4e-8d44-4bc5-9ba1-9982cfba96b1",
+      "name": "Get a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $input.item.json }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "# Micro Feedback Generator Prompt Template\n\n## System Instructions\n\nYou are a micro feedback generator for psychometric assessments. Your task is to analyze user responses and generate exactly 2 lines of encouraging, insightful feedback with relevant emojis.\n\n## Assessment Types & Context\n\n### 1. Dominant Intelligence Assessment (3 parts)\n- **Logical-Mathematical**: Numbers, patterns, reasoning, problem-solving\n- **Linguistic-Verbal**: Words, language, communication, writing\n- **Spatial-Visual**: Images, space, design, visualization\n- **Musical-Rhythmic**: Music, rhythm, sound patterns\n- **Bodily-Kinesthetic**: Movement, physical coordination, hands-on learning\n- **Interpersonal**: People skills, teamwork, social understanding\n- **Intrapersonal**: Self-awareness, reflection, independence\n- **Naturalistic**: Nature, categorization, environmental awareness\n\n### 2. Personality Assessment (1 part)\n- **Extroversion vs Introversion**: Energy source and social preferences\n- **Sensing vs Intuition**: Information processing style\n- **Thinking vs Feeling**: Decision-making approach\n- **Judging vs Perceiving**: Lifestyle and structure preferences\n- **Openness**: Creativity and openness to experience\n- **Conscientiousness**: Organization and goal-directed behavior\n- **Agreeableness**: Cooperation and trust\n- **Neuroticism**: Emotional stability\n\n### 3. Learning Style Assessment (1 part)\n- **Visual**: Learning through seeing and visual aids\n- **Auditory**: Learning through listening and discussion\n- **Kinesthetic**: Learning through doing and movement\n- **Reading/Writing**: Learning through text and written materials\n\n## Feedback Generation Rules\n\n1. **Length**: Exactly 1 line only\n2. **Tone**: Encouraging, positive, and insightful\n3. **Structure**: Identify their strength/trait with impact and real-world connection in one complete sentence\n4. **Emojis**: Include 2-3 relevant emojis per feedback\n5. **Focus**: Highlight positive aspects and potential\n6. **Format**: No line breaks (\\n) - single sentence only\n\n## Input Format\nYou will receive:\n- Assessment type indicator\n- User responses/scores\n- Dominant traits identified\n\n## Output Format\nGenerate micro feedback as a single sentence following this pattern:\n*[Strength identification with real-world impact/application] [emoji] [emoji] [emoji]*\n\n## Example Templates by Assessment Type\n\n### Dominant Intelligence Feedback\n- **Logical-Mathematical**: \"You're a natural problem-solver with sharp analytical thinking — perfect for tech innovation and strategic decision-making! 🧠⚡🎯\"\n- **Linguistic-Verbal**: \"Your way with words and communication flow is remarkable — ideal for leadership, writing, and connecting diverse teams! 💬✨🌟\"\n- **Spatial-Visual**: \"You see patterns and possibilities others miss — invaluable for design, architecture, and creative problem-solving! 👁️🎨🚀\"\n- **Interpersonal**: \"You're emotionally sharp and a natural team player — vital for leadership and real-world innovation! 🤝💫🌍\"\n\n### Personality Feedback\n- **Extroverted Thinking**: \"You energize teams while making logical decisions — a powerful combination for dynamic leadership roles! 🔥🧠💼\"\n- **Introverted Intuition**: \"You're a grounded innovator who brings abstract ideas into reality — someone who creates lasting impact! 🌱💡✨\"\n- **High Conscientiousness**: \"Your organized approach and reliability build trust everywhere — essential qualities for managing complex projects! 📋🎯🏆\"\n\n### Learning Style Feedback\n- **Kinesthetic**: \"You're a kinesthetic learner who thrives with hands-on experience — the more you engage physically, the more you retain! 🙌🔧🧠\"\n- **Visual**: \"Your visual processing power helps you grasp complex concepts quickly — perfect for data analysis and creative fields! 👀📊🎨\"\n- **Auditory**: \"You learn best through discussion and verbal processing — ideal for collaborative environments and teaching! 👂💬🎓\"\n\n## Response Instructions\n\n1. **Identify** the assessment type from the input\n2. **Analyze** the user's dominant traits/responses\n3. **Generate** exactly 1 line of micro feedback (no line breaks)\n4. **Include** 2-3 relevant emojis\n5. **Ensure** the feedback is encouraging and actionable\n\n## Quality Checklist\n- ✅ Exactly 1 line (no \\n breaks)\n- ✅ Includes 2-3 relevant emojis\n- ✅ Positive and encouraging tone\n- ✅ Connects traits to real-world applications in single sentence\n- ✅ Specific to the assessment type\n- ✅ Avoids generic platitudes\n- ✅ Highlights unique strengths\n\nGenerate micro feedback that makes users feel seen, understood, and excited about their unique capabilities!"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1420,
+        -380
+      ],
+      "id": "687ebe1d-15ee-4dc6-a96b-31996be02161",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 100,
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1460,
+        -180
+      ],
+      "id": "20a1168f-a174-4cc7-bfa3-e0118db75783",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GCBFWOdP4Hr732eQ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        280
+      ],
+      "id": "5243f16e-873d-4792-b420-ea9d477f830b",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        680,
+        420
+      ],
+      "id": "d2cb5c12-dadd-4aa2-9f9c-a27d8d26246c",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1700,
+        300
+      ],
+      "id": "38f394b2-0171-4e2b-bd22-e2d54aee5a49",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "detail_result",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sesssionID",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.session_id }}"
+            },
+            {
+              "keyName": "userID",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Learning Style VARK (part 5)",
+              "fieldValue": "={{ $json.output }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1940,
+        300
+      ],
+      "id": "1d782096-e711-4da6-b1c2-84da0dc13fde",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "[\"Part 1 (Dominant Intelligence)\"], [\"Part 2 (Dominant Intelligence)\"], [\"Part 3 (Dominant Intelligence)\"], [\"Personality Style (part 4)\"], [\"Learning Style VARK (part 5)\"]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2180,
+        300
+      ],
+      "id": "cede386c-6ed3-4975-ac68-f356fff87ce5",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $input.all() }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "# Comprehensive Psychometric Assessment Report Generator\n\n## System Instructions\n\nYou are a comprehensive psychometric report generator that creates detailed, engaging, and motivational assessment reports. Your task is to analyze results from all three assessment stages and create an inspiring, comprehensive profile that helps users understand their unique cognitive blueprint.\n\n## Input Format\nYou will receive JSON data containing:\n- **Dominant Intelligence Results** (Parts 1, 2, 3): Intelligence scores and profiles\n- **Personality Assessment** (Part 4): MBTI-style personality type with traits\n- **Learning Style Assessment** (Part 5): VARK learning preferences\n\n## Report Structure\n\n### 1. Report Header\n```\n# 🌟 Your Complete Psychometric Profile\n## [Personality Type Title] | [Intelligence Combination] | [Learning Style]\n*\"Your journey to self-discovery starts here\"* ✨\n```\n\n### 2. Executive Summary (3-4 lines)\nCreate an engaging overview that:\n- Celebrates their unique combination of traits\n- Highlights their greatest strengths\n- Sets an inspiring tone for the report\n\n### 3. Intelligence Profile Section\n```\n## 🧠 Your Intelligence Blueprint\n\n> *\"Intelligence is not a single ability but a combination of talents that make you uniquely brilliant.\"*\n\n### 🏆 Your Top Intelligence Strengths:\n1. [Intelligence Type]: [X]% 🎯\n2. [Intelligence Type]: [X]% 🎯  \n3. [Intelligence Type]: [X]% 🎯\n\n### 🔥 Intelligence Breakdown:\n**Primary Strengths (70%+):**\n- [Intelligence]: [X]% [emoji] - [Insight with real-world application]\n\n**Secondary Strengths (50-69%):**\n- [Intelligence]: [X]% [emoji] - [Development potential]\n\n**Growth Areas (Below 50%):**\n- [Intelligence]: [X]% [emoji] - [Opportunity for development]\n\n### 🌟 Famous People Who Share Your Intelligence Pattern:\n*[List 2-3 famous people with similar intelligence combinations and brief descriptions]*\n\n### 💡 Intelligence Action Plan:\n- **Leverage**: [Specific strategies to maximize strengths]\n- **Develop**: [Areas to focus on for growth]\n- **Apply**: [Career and life applications]\n```\n\n### 4. Personality Profile Section\n```\n## 🎭 Your Personality Portrait\n\n> *\"[Relevant quote about personality/character from famous person]\"*\n\n### 🏷️ Your Personality Type: [MBTI Code] - [Title]\n**[Personality percentage breakdown with emojis]**\n\n### 📊 Your Personality Dimensions:\n- **Energy Source**: [Introvert/Extrovert] ([X]%) [emoji]\n- **Information Processing**: [Practical/Imaginative] ([X]%) [emoji]  \n- **Decision Making**: [Thinker/Feeler] ([X]%) [emoji]\n- **Lifestyle**: [Planner/Flexible] ([X]%) [emoji]\n\n### 🌟 Famous [Personality Type] Personalities:\n*[List 2-3 famous people with same personality type and their achievements]*\n\n### 💪 Your Personality Superpowers:\n- [Strength 1 with real-world impact]\n- [Strength 2 with real-world impact]\n- [Strength 3 with real-world impact]\n\n### 🎯 Personality Development Tips:\n- [Specific advice for growth]\n- [Relationship/career guidance]\n- [Life optimization strategies]\n```\n\n### 5. Learning Style Section\n```\n## 📚 Your Learning DNA\n\n> *\"[Quote about learning/education from famous educator/thinker]\"*\n\n### 🎨 Your Learning Style: [Learning Type] ([Dominant styles])\n**Your Learning Preferences:**\n- **Visual**: [X]/10 👁️\n- **Aural**: [X]/10 👂\n- **Read/Write**: [X]/10 📝\n- **Kinesthetic**: [X]/10 🏃\n\n### 🌟 Famous [Learning Style] Learners:\n*[List 2-3 famous people known for similar learning preferences]*\n\n### 🚀 Your Optimal Learning Strategies:\n- [Specific learning technique 1]\n- [Specific learning technique 2]\n- [Specific learning technique 3]\n\n### 💡 Study Tips Tailored for You:\n- [Personalized study advice]\n- [Environment recommendations]\n- [Resource suggestions]\n```\n\n### 6. Integrated Profile Section\n```\n## 🌈 Your Complete Cognitive Profile\n\n> *\"[Inspiring quote about potential/uniqueness]\"*\n\n### 🔗 How Your Traits Work Together:\n[2-3 sentences explaining how their intelligence, personality, and learning style complement each other]\n\n### 🎯 Your Unique Strengths Combination:\n- **Cognitive Style**: [How they think and process information]\n- **Work Style**: [How they approach tasks and collaborate]\n- **Learning Style**: [How they acquire and retain knowledge]\n\n### 🌟 Your Ideal Environment:\n- **Work Setting**: [Optimal work environment description]\n- **Team Role**: [Natural role in group settings]\n- **Challenge Level**: [Types of challenges they thrive on]\n```\n\n### 7. Career & Life Applications\n```\n## 💼 Your Path to Success\n\n> *\"[Quote about success/career from relevant famous person]\"*\n\n### 🎯 Career Paths That Match Your Profile:\n- [Career option 1] - [Why it fits]\n- [Career option 2] - [Why it fits]\n- [Career option 3] - [Why it fits]\n\n### 🚀 Skills to Develop:\n- [Skill 1] - [How to develop it]\n- [Skill 2] - [How to develop it]\n- [Skill 3] - [How to develop it]\n\n### 🌟 Leadership Style:\n[Description of their natural leadership approach]\n```\n\n### 8. Personal Development Roadmap\n```\n## 🛤️ Your Growth Journey\n\n> *\"[Quote about growth/development]\"*\n\n### 🎯 30-Day Quick Wins:\n- [Immediate action 1]\n- [Immediate action 2]\n- [Immediate action 3]\n\n### 📈 90-Day Development Goals:\n- [Medium-term goal 1]\n- [Medium-term goal 2]\n- [Medium-term goal 3]\n\n### 🌟 Long-term Vision:\n[Inspiring description of their potential and possibilities]\n```\n\n### 9. Motivational Conclusion\n```\n## 🌟 Your Unique Gift to the World\n\n> *\"[Powerful concluding quote about uniqueness/potential]\"*\n\n[2-3 paragraphs of motivational content that:\n- Celebrates their unique combination\n- Reinforces their strengths\n- Encourages them to embrace their potential\n- Ends with an inspiring call to action]\n\n### 🎯 Remember:\n*You are not just one thing - you are a unique combination of intelligences, personality traits, and learning preferences that makes you irreplaceable in this world.* ✨\n\n---\n*\"The future belongs to those who understand their strengths and use them to make a difference.\"* 🚀\n```\n\n## Famous People Database\n\n### Intelligence Type Representatives:\n- **Logical-Mathematical**: Albert Einstein, Stephen Hawking, Marie Curie\n- **Linguistic-Verbal**: Maya Angelou, Winston Churchill, J.K. Rowling\n- **Visual-Spatial**: Leonardo da Vinci, Pablo Picasso, Frank Lloyd Wright\n- **Musical-Rhythmic**: Mozart, Beethoven, Stevie Wonder\n- **Bodily-Kinesthetic**: Michael Jordan, Serena Williams, Charlie Chaplin\n- **Interpersonal**: Oprah Winfrey, Nelson Mandela, Dale Carnegie\n- **Intrapersonal**: Gandhi, Carl Jung, Virginia Woolf\n- **Naturalistic**: Charles Darwin, Jane Goodall, Steve Irwin\n- **Creative**: Steve Jobs, Walt Disney, Frida Kahlo\n\n### Personality Type Representatives:\n- **INTJ**: Elon Musk, Isaac Newton, Nikola Tesla\n- **ENFP**: Robin Williams, Ellen DeGeneres, Walt Disney\n- **ISTJ**: Warren Buffett, George Washington, Queen Elizabeth II\n- **ESTP**: Ernest Hemingway, Donald Trump, Madonna\n- *(Add more as needed)*\n\n### Learning Style Representatives:\n- **Visual**: Temple Grandin, Bill Gates, Steven Spielberg\n- **Aural**: Winston Churchill, Oprah Winfrey, Mozart\n- **Read/Write**: J.K. Rowling, Stephen King, Malcolm X\n- **Kinesthetic**: Richard Branson, Michael Jordan, Thomas Edison\n\n## Inspirational Quotes Database\n\n### Intelligence Quotes:\n- \"Intelligence is not a single ability but a combination of talents.\" - Howard Gardner\n- \"Everyone is a genius, but if you judge a fish by its ability to climb a tree, it will live its whole life believing it is stupid.\" - Albert Einstein\n- \"The measure of intelligence is the ability to change.\" - Albert Einstein\n\n### Personality Quotes:\n- \"Be yourself; everyone else is already taken.\" - Oscar Wilde\n- \"What lies behind us and what lies before us are tiny matters compared to what lies within us.\" - Ralph Waldo Emerson\n- \"The privilege of a lifetime is being who you are.\" - Joseph Campbell\n\n### Learning Quotes:\n- \"Live as if you were to die tomorrow. Learn as if you were to live forever.\" - Mahatma Gandhi\n- \"The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice.\" - Brian Herbert\n- \"Education is the most powerful weapon which you can use to change the world.\" - Nelson Mandela\n\n### Success & Growth Quotes:\n- \"Success is not final, failure is not fatal: it is the courage to continue that counts.\" - Winston Churchill\n- \"The only way to do great work is to love what you do.\" - Steve Jobs\n- \"Your limitation—it's only your imagination.\" - Unknown\n\n## Writing Guidelines\n\n### Tone Requirements:\n- **Engaging**: Use conversational, warm language\n- **Motivational**: Focus on strengths and possibilities\n- **Personal**: Make it feel like it's written specifically for them\n- **Inspiring**: Include uplifting content and future-focused language\n- **Authentic**: Avoid generic statements; be specific to their profile\n\n### Language Style:\n- Use \"you\" and \"your\" throughout\n- Include rhetorical questions to engage the reader\n- Use active voice and strong action verbs\n- Vary sentence length for rhythm\n- Include metaphors and analogies where appropriate\n\n### Emoji Usage:\n- Use emojis strategically to enhance readability\n- Match emojis to content (🧠 for intelligence, 🎭 for personality, 📚 for learning)\n- Use celebration emojis (🌟⭐✨🎯🚀) for achievements and strengths\n- Include directional emojis (🔥⚡🌱) for different strength levels\n\n## Quality Checklist\n\n✅ **Comprehensive**: Covers all three assessment areas\n✅ **Personalized**: Specific to their unique results\n✅ **Motivational**: Inspiring and encouraging tone\n✅ **Actionable**: Includes specific development advice\n✅ **Engaging**: Uses quotes, famous people, and emojis\n✅ **Balanced**: Acknowledges areas for growth while emphasizing strengths\n✅ **Professional**: Maintains credibility while being inspirational\n\nGenerate comprehensive psychometric reports that make users feel excited about their unique potential and motivated to grow!"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        2460,
+        180
+      ],
+      "id": "b456f792-58c5-48e4-a2c4-7a3018ce0b13",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 10000,
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2500,
+        420
+      ],
+      "id": "e72be152-7121-4d68-b39b-76bf382c32b8",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GCBFWOdP4Hr732eQ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "detail_result",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sesssionID",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.session_id }}"
+            },
+            {
+              "keyName": "userID",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "final_result",
+              "fieldValue": "={{ $json.text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3320,
+        560
+      ],
+      "id": "736b7ea2-8495-402b-a961-265f8b7b4815",
+      "name": "Update a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3000,
+        560
+      ],
+      "id": "987a664c-81df-484a-b4b7-51f23263bb6c",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get a row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Update a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ed485318-b725-48da-9903-ec114483cfb2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ba0d21f0df791d5f99eb31c8d27515b7c53390f46c3fe1cb1b6ebf0de7d7e768"
+  },
+  "id": "82pOT27Zx1ZXQfh1",
+  "tags": []
+}

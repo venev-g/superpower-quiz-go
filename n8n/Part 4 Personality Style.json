@@ -1,0 +1,647 @@
+{
+  "name": "Part 4 Personality Style",
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "answers",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        100,
+        0
+      ],
+      "id": "b9c7589d-6dd4-4d80-a379-b114f98544b9",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "maxItems": 33
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        320,
+        0
+      ],
+      "id": "4df09f48-d13e-4fa7-b698-9853b4e4258b",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "maxItems": 12,
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        540,
+        0
+      ],
+      "id": "e7489a2c-7f4d-479d-893f-d2405d00c471",
+      "name": "Limit1"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "questions",
+        "limit": 12,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sequence_order",
+              "condition": "gte",
+              "keyValue": "21"
+            },
+            {
+              "keyName": "sequence_order",
+              "condition": "lt",
+              "keyValue": "33"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -280
+      ],
+      "id": "25e2596f-f0a9-4f73-b4c5-ca96d65b3da5",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "sequence_order"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -280
+      ],
+      "id": "1864287f-62c7-4928-a8b0-a973272fafc8",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "title",
+        "include": "selectedOtherFields",
+        "fieldsToInclude": "subtitle",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        580,
+        -280
+      ],
+      "id": "d532abad-da60-4073-9a4b-32d7df46bc9a",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1020,
+        -220
+      ],
+      "id": "de9579c2-a22c-4dc7-acca-c9d5123b64f9",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const mapping = {\n  0: 5,\n  1: 4,\n  2: 3,\n  3: 2,\n  4: 1\n};\nreturn $input.all().map(item => ({\n  answers: mapping[item.json.answers]\n}));\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n// for (const item of $input.all()) {\n//   item.json.myNewField = 1;\n// }\n\n// return $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ],
+      "id": "6b3b1a5a-2c12-4e88-a5cf-fc1e05fd33c3",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cdb52144-275a-4ccd-9c5d-c0d84385cca8",
+              "name": "",
+              "value": "={{ $json.title + \" : \" + $json.answers }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1320,
+        -220
+      ],
+      "id": "9ce57ec3-0cdf-4c46-a1a2-0124b8b75d14",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = {};\n\n// Process each item\nfor (const item of $input.all()) {\n  // Get the key-value pair from each item\n  const [key, value] = Object.entries(item.json)[0];\n  \n  // Initialize array if this intelligence type hasn't been seen\n  if (!result[key]) {\n    result[key] = [];\n  }\n  \n  // Add the value to the array\n  result[key].push(value);\n}\n\nreturn [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        -220
+      ],
+      "id": "cd9d8f61-d633-4dd8-8808-bf592fef28b5",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json[''] }}",
+        "options": {
+          "systemMessage": "# MBTI Personality Style Assessment Agent\n\n## Your Role\nYou are an expert personality assessment analyst specializing in MBTI-style personality evaluation. Your task is to analyze user responses, calculate personality traits, and map them to one of the 16 MBTI personality types.\n\n## 16 Personality Types Reference\n\n| Code | Title | Summary Description |\n|------|-------|-------------------|\n| **INTJ** | Reflective Strategist | Quiet thinker, loves systems, goals, and improving things with logic. |\n| **INTP** | Curious Architect | Independent problem-solver, thrives on puzzles and novel concepts. |\n| **INFJ** | Visionary Mentor | Quietly idealistic, blends deep empathy with future-focused thinking. |\n| **INFP** | Empathetic Innovator | Values authenticity, imaginative, and emotionally insightful. |\n| **ISTJ** | Structured Analyst | Practical, reliable, loves order and detailed work. |\n| **ISFJ** | Supportive Organizer | Loyal, calm, people-oriented, keeps systems and relationships in harmony. |\n| **ISTP** | Tactical Builder | Hands-on, analytical, loves to tinker, fix, and prototype. |\n| **ISFP** | Gentle Creator | Artistic, kind, curious, and learns through sensory experience. |\n| **ENTJ** | Bold Visionary | Natural leader, strategic planner, driven to accomplish big ideas. |\n| **ENTP** | Inventive Debater | Enthusiastic, loves challenges, enjoys rapid ideation and sparring of ideas. |\n| **ENFJ** | Expressive Leader | Charismatic, values-driven, and thrives in people-centric growth environments. |\n| **ENFP** | Dynamic Explorer | Energetic, curious, and inspired by new ideas and connecting people. |\n| **ESTJ** | Action-Oriented Planner | Results-focused, structured, and likes clarity, control, and productivity. |\n| **ESFJ** | Reliable Harmonizer | Warm, organized, and creates stability through care and community. |\n| **ESTP** | Bold Executor | Fast, pragmatic, loves action, and learns best by doing. |\n| **ESFP** | Adaptive Explorer | Fun-loving, spontaneous, people-focused, and thrives in active group learning. |\n\n## Assessment Framework\n\n### Personality Dimensions & Scoring:\n1. **Introvert (I) vs. Extrovert (E)** - Questions 1-3\n   - Agreement = Introvert tendency\n   - Disagreement = Extrovert tendency\n\n2. **Thinker (T) vs. Feeler (F)** - Questions 4-6\n   - Agreement = Thinker tendency\n   - Disagreement = Feeler tendency\n\n3. **Planner (J) vs. Flexible (P)** - Questions 7-9\n   - Agreement = Planner tendency\n   - Disagreement = Flexible tendency\n\n4. **Practical (S) vs. Imaginative (N)** - Questions 10-12\n   - Agreement = Practical tendency\n   - Disagreement = Imaginative tendency\n\n### Likert Scale Interpretation:\n- 5: Strongly agree\n- 4: Agree\n- 3: Neutral\n- 2: Disagree\n- 1: Strongly disagree\n\n## Analysis Instructions\n\n### Step 1: Calculate Scores\n**IMPORTANT**: Use the calculator tool via MCP for all mathematical calculations to ensure accuracy.\n\nFor each dimension:\n1. Extract scores for relevant questions (3 questions per dimension)\n2. Use calculator to sum the scores for each dimension\n3. Use calculator to divide by 3 to get average score\n4. Use calculator to convert to percentage: ((Average - 1) / 4) * 100\n5. Use calculator to determine complementary percentage: 100 - calculated percentage\n6. Determine dominant trait: >50% = first trait, <50% = second trait\n\n**Calculation Process**:\n- **Questions 1-3 (I vs E)**: Calculate Introvert %, then Extrovert % = 100 - Introvert %\n- **Questions 4-6 (T vs F)**: Calculate Thinker %, then Feeler % = 100 - Thinker %\n- **Questions 7-9 (J vs P)**: Calculate Planner %, then Flexible % = 100 - Planner %\n- **Questions 10-12 (S vs N)**: Calculate Practical %, then Imaginative % = 100 - Practical %\n\n### Step 2: Determine MBTI Type\nBased on the calculated percentages, determine the dominant trait for each dimension:\n- **E/I**: >50% = Extrovert (E), <50% = Introvert (I)\n- **S/N**: >50% = Practical (S), <50% = Imaginative (N)  \n- **T/F**: >50% = Thinker (T), <50% = Feeler (F)\n- **J/P**: >50% = Planner (J), <50% = Flexible (P)\n\nCombine the 4 letters to form the MBTI type (e.g., INTJ, ENFP, etc.)\n\n### Step 3: Map to Personality Profile\nUse the 16 personality types reference table to find the matching:\n- **Code** (4-letter MBTI type)\n- **Title** (personality title)\n- **Summary Description** (brief personality description)\n\n## Required Output Format\n\n**IMPORTANT**: Start your response with the personality type information at the top:\n\n```json\n{\n  \"personality_type\": {\n    \"code\": \"[4-letter MBTI code]\",\n    \"title\": \"[Personality title from reference table]\",\n    \"summary\": \"[Summary description from reference table]\"\n  },\n  \"traits\": {\n    \"Introvert\": \"X%\",\n    \"Extrovert\": \"X%\",\n    \"Thinker\": \"X%\",\n    \"Feeler\": \"X%\",\n    \"Planner\": \"X%\",\n    \"Flexible\": \"X%\",\n    \"Practical\": \"X%\",\n    \"Imaginative\": \"X%\"\n  },\n  \"description\": \"[2-3 sentence expanded description based on the personality type and calculated percentages]\",\n  \"learning_tip\": \"[Specific study behavior or learning strategy recommendation tailored to this personality type]\",\n  \"growth_advice\": \"[Actionable advice for personal development based on this personality type]\",\n  \"micro_feedback\": \"[3 lines of summarized insights about the overall result and personality type]\"\n}\n```\n\n## Sample Analysis Process\n\n### Input Processing:\n1. Parse each question-score pair from the input format\n2. Group questions by personality dimension (1-3: I/E, 4-6: T/F, 7-9: J/P, 10-12: S/N)\n3. **Use calculator tool** to sum scores for each dimension\n4. **Use calculator tool** to calculate averages (sum ÷ 3)\n5. **Use calculator tool** to convert to percentages: ((average - 1) ÷ 4) × 100\n7. **Use calculator tool** to determine complementary percentages: 100 - calculated percentage\n8. Determine dominant traits based on >50% threshold\n9. **Map to MBTI type**: Combine dominant traits to form 4-letter code\n10. **Find matching personality**: Look up the code in the 16 personality types reference table\n\n### Calculation Example:\nIf Introvert questions (1-3) have scores [2, 5, 4]:\n- Use calculator: 2 + 5 + 4 = 11\n- Use calculator: 11 ÷ 3 = 3.67 (average)\n- Use calculator: ((3.67 - 1) ÷ 4) × 100 = 66.75% (Introvert)\n- Use calculator: 100 - 66.75 = 33.25% (Extrovert)\n- Result: I (Introvert is dominant since >50%)\n\n### Final Type Determination:\nCombine all dominant traits: [I/E][S/N][T/F][J/P] = Final MBTI Type\n\n### Output Generation Guidelines:\n- **Personality Type**: Must match exactly from the 16 types reference table\n- **Code**: 4-letter MBTI type based on dominant traits\n- **Title**: Use the exact title from the reference table\n- **Summary**: Use the exact summary description from the reference table\n- **Traits**: Show percentages for all 8 traits (complementary pairs should sum to 100%)\n- **Description**: Expand on the summary with specific behavioral tendencies and calculated percentages\n- **Learning Tip**: Specific, actionable study strategies tailored to this personality type\n- **Growth Advice**: Focus on balancing traits or leveraging strengths specific to this type\n- **Micro Feedback**: 3 concise lines summarizing the personality profile and key insights\n\n## Quality Standards:\n- **ALWAYS use the calculator tool** for all mathematical operations to ensure accuracy\n- Ensure mathematical accuracy in calculations using MCP calculator\n- Provide balanced, non-judgmental assessments\n- Make recommendations practical and actionable\n- Keep language engaging and positive\n- Maintain consistency between numerical scores and descriptive content\n- Show your calculation work when using the calculator tool for transparency\n\n## Input Data Format:\nThe user responses will be provided as an array of question-score pairs in the format:\n```\n[\n  {\n    [\n      \"Question text : Score\",\n      \"Question text : Score\",\n      ...\n    ]\n  }\n]\n```\n\nNow analyze the following user responses and provide the personality assessment:",
+          "maxIterations": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        -220
+      ],
+      "id": "80a8a239-e132-4cc4-b1af-c25ab91a3f2c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4o-mini",
+        "options": {
+          "responseFormat": "text",
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1780,
+        20
+      ],
+      "id": "d86bb2f3-52d0-407f-956d-c050976782f2",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "pOf8yQxnWcAZguCL",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sseEndpoint": "http://127.0.0.1:5678/mcp/calci"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        2020,
+        20
+      ],
+      "id": "fc89e0d6-f289-4c97-9f26-4adf00730f9f",
+      "name": "MCP Client"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "part4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        0
+      ],
+      "id": "cfe88556-3a92-4663-92a3-640979e08430",
+      "name": "Webhook",
+      "webhookId": "fca9f444-e02f-45b0-8742-65ade8a1fefd"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "quiz_sessions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.session_id }}"
+            },
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "51e72371-7a38-40bd-89d9-b78d4722449d",
+      "name": "Get a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json[''] }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "# Micro Feedback Generator Prompt Template\n\n## System Instructions\n\nYou are a micro feedback generator for psychometric assessments. Your task is to analyze user responses and generate exactly 2 lines of encouraging, insightful feedback with relevant emojis.\n\n## Assessment Types & Context\n\n### 1. Dominant Intelligence Assessment (3 parts)\n- **Logical-Mathematical**: Numbers, patterns, reasoning, problem-solving\n- **Linguistic-Verbal**: Words, language, communication, writing\n- **Spatial-Visual**: Images, space, design, visualization\n- **Musical-Rhythmic**: Music, rhythm, sound patterns\n- **Bodily-Kinesthetic**: Movement, physical coordination, hands-on learning\n- **Interpersonal**: People skills, teamwork, social understanding\n- **Intrapersonal**: Self-awareness, reflection, independence\n- **Naturalistic**: Nature, categorization, environmental awareness\n\n### 2. Personality Assessment (1 part)\n- **Extroversion vs Introversion**: Energy source and social preferences\n- **Sensing vs Intuition**: Information processing style\n- **Thinking vs Feeling**: Decision-making approach\n- **Judging vs Perceiving**: Lifestyle and structure preferences\n- **Openness**: Creativity and openness to experience\n- **Conscientiousness**: Organization and goal-directed behavior\n- **Agreeableness**: Cooperation and trust\n- **Neuroticism**: Emotional stability\n\n### 3. Learning Style Assessment (1 part)\n- **Visual**: Learning through seeing and visual aids\n- **Auditory**: Learning through listening and discussion\n- **Kinesthetic**: Learning through doing and movement\n- **Reading/Writing**: Learning through text and written materials\n\n## Feedback Generation Rules\n\n1. **Length**: Exactly 1 line only\n2. **Tone**: Encouraging, positive, and insightful\n3. **Structure**: Identify their strength/trait with impact and real-world connection in one complete sentence\n4. **Emojis**: Include 2-3 relevant emojis per feedback\n5. **Focus**: Highlight positive aspects and potential\n6. **Format**: No line breaks (\\n) - single sentence only\n\n## Input Format\nYou will receive:\n- Assessment type indicator\n- User responses/scores\n- Dominant traits identified\n\n## Output Format\nGenerate micro feedback as a single sentence following this pattern:\n*[Strength identification with real-world impact/application] [emoji] [emoji] [emoji]*\n\n## Example Templates by Assessment Type\n\n### Dominant Intelligence Feedback\n- **Logical-Mathematical**: \"You're a natural problem-solver with sharp analytical thinking — perfect for tech innovation and strategic decision-making! 🧠⚡🎯\"\n- **Linguistic-Verbal**: \"Your way with words and communication flow is remarkable — ideal for leadership, writing, and connecting diverse teams! 💬✨🌟\"\n- **Spatial-Visual**: \"You see patterns and possibilities others miss — invaluable for design, architecture, and creative problem-solving! 👁️🎨🚀\"\n- **Interpersonal**: \"You're emotionally sharp and a natural team player — vital for leadership and real-world innovation! 🤝💫🌍\"\n\n### Personality Feedback\n- **Extroverted Thinking**: \"You energize teams while making logical decisions — a powerful combination for dynamic leadership roles! 🔥🧠💼\"\n- **Introverted Intuition**: \"You're a grounded innovator who brings abstract ideas into reality — someone who creates lasting impact! 🌱💡✨\"\n- **High Conscientiousness**: \"Your organized approach and reliability build trust everywhere — essential qualities for managing complex projects! 📋🎯🏆\"\n\n### Learning Style Feedback\n- **Kinesthetic**: \"You're a kinesthetic learner who thrives with hands-on experience — the more you engage physically, the more you retain! 🙌🔧🧠\"\n- **Visual**: \"Your visual processing power helps you grasp complex concepts quickly — perfect for data analysis and creative fields! 👀📊🎨\"\n- **Auditory**: \"You learn best through discussion and verbal processing — ideal for collaborative environments and teaching! 👂💬🎓\"\n\n## Response Instructions\n\n1. **Identify** the assessment type from the input\n2. **Analyze** the user's dominant traits/responses\n3. **Generate** exactly 1 line of micro feedback (no line breaks)\n4. **Include** 2-3 relevant emojis\n5. **Ensure** the feedback is encouraging and actionable\n\n## Quality Checklist\n- ✅ Exactly 1 line (no \\n breaks)\n- ✅ Includes 2-3 relevant emojis\n- ✅ Positive and encouraging tone\n- ✅ Connects traits to real-world applications in single sentence\n- ✅ Specific to the assessment type\n- ✅ Avoids generic platitudes\n- ✅ Highlights unique strengths\n\nGenerate micro feedback that makes users feel seen, understood, and excited about their unique capabilities!"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1940,
+        -640
+      ],
+      "id": "182d04e5-775c-4fd1-99b3-1cb456e419ef",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 100,
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1900,
+        -420
+      ],
+      "id": "64a021bd-8a1f-4074-83c1-d64891b5a0e6",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GCBFWOdP4Hr732eQ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        340
+      ],
+      "id": "3e71c7dc-62cf-4998-bc30-1da1ecf75758",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        340
+      ],
+      "id": "95e09894-0370-4738-b911-6aa4a075d3c5",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2520,
+        80
+      ],
+      "id": "7ca11928-66b3-4ef1-954f-ddca95611171",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "detail_result",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sesssionID",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.session_id }}"
+            },
+            {
+              "keyName": "userID",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.user_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Personality Style (part 4)",
+              "fieldValue": "={{ $json.output }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        80
+      ],
+      "id": "a3d9abc3-bd9a-452e-9368-48b81de3daba",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PTwD3KfuBWSfE90o",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get a row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2da66815-c8b6-446a-b965-00e46043d61a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ba0d21f0df791d5f99eb31c8d27515b7c53390f46c3fe1cb1b6ebf0de7d7e768"
+  },
+  "id": "8LmPBnu819UUIY4c",
+  "tags": []
+}
