@@ -11,9 +11,10 @@ This project is configured with GitHub Actions for Continuous Integration and Co
 - Pull requests to `main`
 
 **Permissions:**
-- `contents: write` - Required for pushing to gh-pages branch
+- `contents: read` - Required for checking out code
 - `pages: write` - Required for GitHub Pages deployment
-- `id-token: write` - Required for OIDC authentication
+- `id-token: write` - Required for OIDC authentication with GitHub Pages
+- `actions: read` - Required for accessing workflow artifacts
 
 **Jobs:**
 - **Test & Lint**: Runs ESLint, TypeScript checking, and builds the project
@@ -48,8 +49,10 @@ This project is configured with GitHub Actions for Continuous Integration and Co
 
 1. Go to your repository Settings
 2. Navigate to Pages section
-3. Set Source to "GitHub Actions"
+3. Set Source to "GitHub Actions" (NOT "Deploy from a branch")
 4. The site will be available at: `https://venev-g.github.io/superpower-quiz-go/`
+
+**Important**: When using "GitHub Actions" as the source, the workflow uses the official GitHub Pages deployment actions instead of pushing to a gh-pages branch.
 
 ### 2. Configure Environment Variables
 
@@ -124,33 +127,44 @@ npm run preview
 2. **ESLint errors**: Run `npm run lint` locally to see issues
 3. **TypeScript errors**: Run `npx tsc --noEmit` to check types
 4. **Deployment fails**: Check environment variables and secrets
-5. **Permission denied to push to gh-pages**: 
-   - Ensure the workflow has proper permissions set at the top level
-   - Verify that `contents: write` and `pages: write` are configured
-   - Check that GitHub Pages is enabled in repository settings
-   - Confirm the `GITHUB_TOKEN` is being used correctly in the deployment step
+5. **404 Error on GitHub Pages**: 
+   - Ensure you've selected "GitHub Actions" as the source in Pages settings
+   - Verify the base path in `vite.config.ts` matches your repository name
+   - Check that the build is generating files in the `dist` directory
+   - Wait a few minutes after deployment for changes to propagate
+6. **GitHub Actions deployment fails**: 
+   - Ensure proper permissions are set in the workflow
+   - Verify that GitHub Pages is enabled in repository settings
+   - Check that the workflow is using the correct GitHub Actions deployment actions
 
-### Permission Issues Fix
+### GitHub Actions Deployment
 
-If you encounter a 403 error like:
-```
-remote: Permission to user/repo.git denied to github-actions[bot].
-fatal: unable to access 'https://github.com/user/repo.git/': The requested URL returned error: 403
-```
-
-This means the workflow lacks proper permissions. The workflow file already includes the necessary permissions:
+The workflow now uses the official GitHub Pages deployment actions:
 
 ```yaml
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+- name: Setup Pages
+  uses: actions/configure-pages@v4
+
+- name: Upload to GitHub Pages
+  uses: actions/upload-pages-artifact@v3
+  with:
+    path: ./dist
+
+- name: Deploy to GitHub Pages
+  uses: actions/deploy-pages@v4
 ```
+
+This approach is recommended when using "GitHub Actions" as the source in Pages settings, as it:
+- Uses official GitHub Actions for deployment
+- Provides better security with OIDC authentication
+- Eliminates the need to push to a gh-pages branch
+- Works seamlessly with GitHub's Pages infrastructure
 
 If issues persist:
 1. Check that GitHub Pages is enabled in Settings → Pages
-2. Ensure the repository allows GitHub Actions to push to protected branches
-3. Verify no branch protection rules are blocking the gh-pages branch
+2. Ensure the source is set to "GitHub Actions" (not "Deploy from a branch")
+3. Verify the workflow completed successfully in the Actions tab
+4. Wait a few minutes for deployment to propagate
 
 ### Getting Help
 
