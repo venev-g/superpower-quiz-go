@@ -1,16 +1,20 @@
-name: CI/CD Pipeline
+name: Deploy static content to Pages
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
-  actions: read
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 env:
   NODE_VERSION: '22'
@@ -81,17 +85,14 @@ jobs:
         run: npm outdated || true
 
   # Deploy to GitHub Pages (Production)
-  deploy-production:
-    name: Deploy to Production
+  deploy:
+    name: Deploy to GitHub Pages
     needs: [test, security]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    concurrency:
-      group: "pages"
-      cancel-in-progress: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -125,10 +126,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload to GitHub Pages
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: './dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
