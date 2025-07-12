@@ -65,10 +65,12 @@ export const useAuthSimple = () => {
     };
   }, []);
 
-  const signOut = async () => {
+  const signOut = async (onSignOutComplete?: () => void) => {
     try {
       await supabase.auth.signOut({ scope: 'global' });
-      window.location.href = '/auth';
+      if (onSignOutComplete) {
+        onSignOutComplete();
+      }
     } catch (error) {
       console.error('Error signing out:', error);
     }

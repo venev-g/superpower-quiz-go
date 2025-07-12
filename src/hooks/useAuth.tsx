@@ -121,11 +121,13 @@ export const useAuth = () => {
     };
   }, []);
 
-  const signOut = async () => {
+  const signOut = async (onSignOutComplete?: () => void) => {
     try {
       await supabase.auth.signOut({ scope: 'global' });
       setIsAdmin(false);
-      window.location.href = '/auth';
+      if (onSignOutComplete) {
+        onSignOutComplete();
+      }
     } catch (error) {
       console.error('Error signing out:', error);
     }

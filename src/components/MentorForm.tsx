@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/Input_2';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +28,7 @@ const aiAvatar = (
 );
 
 export function MentorForm({ onClose }: { onClose?: () => void }) {
+  const navigate = useNavigate();
   const [showChat, setShowChat] = useState(false);
   const [showSessionManager, setShowSessionManager] = useState(true);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -960,7 +962,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
               <button
                 type="button"
                 className="ml-4 px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition"
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => navigate('/dashboard')}
               >
                 Back
               </button>
@@ -1381,7 +1383,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
         <button
           type="button"
           className="absolute top-4 left-4 px-4 py-2 rounded bg-white/80 hover:bg-white text-blue-700 font-semibold shadow z-20"
-          onClick={() => window.location.href = '/dashboard'}
+          onClick={() => navigate('/dashboard')}
         >
           Back
         </button>

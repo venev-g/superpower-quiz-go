@@ -53,7 +53,7 @@ const Navbar = () => {
               Welcome back! 👋
             </span>
             <Button
-              onClick={signOut}
+              onClick={() => signOut(() => navigate('/auth'))}
               variant="outline"
               size="sm"
               className="rounded-full"
