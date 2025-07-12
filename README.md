@@ -1,8 +1,18 @@
-# Welcome to your Lovable project
+# Superpower Quiz Go
+
+[![CI/CD Pipeline](https://github.com/venev-g/superpower-quiz-go/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/venev-g/superpower-quiz-go/actions/workflows/ci-cd.yml)
+[![Code Quality](https://github.com/venev-g/superpower-quiz-go/actions/workflows/code-quality.yml/badge.svg)](https://github.com/venev-g/superpower-quiz-go/actions/workflows/code-quality.yml)
+
+A comprehensive personality and intelligence assessment quiz built with React, TypeScript, and Supabase.
+
+## 🚀 Live Demo
+
+- **Production**: [https://venev-g.github.io/superpower-quiz-go/](https://venev-g.github.io/superpower-quiz-go/)
+- **Repository**: [https://github.com/venev-g/superpower-quiz-go](https://github.com/venev-g/superpower-quiz-go)
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/0700a2eb-ad88-4a7f-9842-3c863116d0d7
+**Original URL**: https://lovable.dev/projects/0700a2eb-ad88-4a7f-9842-3c863116d0d7
 
 ## How can I edit this code?
 
