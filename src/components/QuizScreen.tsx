@@ -9,9 +9,12 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface QuizScreenProps {
   onComplete: (answers: number[], sessionId: string | null) => void;
+  onPartComplete: (part: number, answers: number[], sessionId: string | null) => void;
   progress: number;
   onProgressUpdate: (progress: number) => void;
   allowRestart?: boolean; // Optional prop to allow restarting quiz
+  existingSessionId?: string | null; // Pass existing session ID from parent
+  existingAnswers?: number[]; // Pass existing answers from parent
 }
 
 type Question = Database['public']['Tables']['questions']['Row'];
@@ -24,7 +27,7 @@ interface QuestionForQuiz {
   sequence_order: number;
 }
 
-const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgressUpdate, allowRestart = false }) => {
+const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, onPartComplete, progress, onProgressUpdate, allowRestart = false, existingSessionId, existingAnswers }) => {
   const [questions, setQuestions] = useState<QuestionForQuiz[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -95,37 +98,65 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
         return;
       }
 
-      console.log('Looking for existing session for user:', user.id);
+      console.log('Looking for existing session for user:', user.id, 'currentProgress:', progress);
 
-      // First, check if there's an active session (not completed)
+      // First, check if there's an incomplete session (completed_at is null AND current_question < total)
       const { data: existingSessions, error: findError } = await supabase
         .from('quiz_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .is('completed_at', null)
+        .is('completed_at', null) // Only find sessions that are not completed
+        .lt('current_question', questions.length + 1) // And haven't finished all questions
         .order('started_at', { ascending: false })
         .limit(1);
 
-      if (findError) throw findError;
+      if (findError) {
+        console.error('Error finding existing sessions:', findError);
+        throw findError;
+      }
 
       if (existingSessions && existingSessions.length > 0) {
         // Resume existing session
         const existingSession = existingSessions[0];
         setSessionId(existingSession.id);
         
-        // Resume from where user left off
-        const resumeQuestionIndex = existingSession.current_question || 0;
-        const resumeAnswers = Array.isArray(existingSession.answers) ? existingSession.answers as number[] : [];
+        // Resume from where user left off - use progress prop if available (coming from part verdict screen)
+        // Otherwise use the session's current_question
+        let resumeQuestionIndex;
+        
+        if (progress > 0) {
+          // Coming from part verdict screen - use the progress prop to resume
+          console.log('Resuming from part verdict screen at progress:', progress);
+          resumeQuestionIndex = progress;
+        } else {
+          // Normal session resumption - use database current_question
+          const nextQuestionToAnswer = existingSession.current_question || 1;
+          const resumeAnswers = Array.isArray(existingSession.answers) ? existingSession.answers as number[] : [];
+          
+          // Convert to 0-based index for component state
+          resumeQuestionIndex = Math.max(0, nextQuestionToAnswer - 1);
+          
+          // Set answers from the session
+          setAnswers(resumeAnswers);
+        }
         
         // Ensure the question index is valid
         const validQuestionIndex = Math.max(0, Math.min(resumeQuestionIndex, questions.length - 1));
         
+        console.log('Resuming session:', {
+          sessionId: existingSession.id,
+          storedCurrentQuestion: existingSession.current_question,
+          progressProp: progress,
+          resumeQuestionIndex,
+          validQuestionIndex,
+          answersCount: existingSession.answers ? (existingSession.answers as number[]).length : 0
+        });
+        
         setCurrentQuestion(validQuestionIndex);
-        setAnswers(resumeAnswers);
         onProgressUpdate(validQuestionIndex);
         setSessionInitialized(true);
         
-        console.log('Resuming existing session:', existingSession.id, 'at question:', validQuestionIndex);
+        console.log('Resuming existing session:', existingSession.id, 'at question:', validQuestionIndex + 1);
         return;
       }
 
@@ -133,41 +164,21 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
       console.log('Creating new session for user:', user.id);
       
       try {
+        // Create new session directly
         const { data, error } = await supabase
           .from('quiz_sessions')
           .insert({
             user_id: user.id,
             total_questions: questions.length,
-            current_question: 0,
-            started_at: new Date().toISOString()
+            current_question: 1,
+            started_at: new Date().toISOString(),
+            answers: []
           })
           .select('id')
           .single();
 
         if (error) {
-          // If constraint violation, it means another session was created concurrently
-          if (error.code === '23505') {
-            console.log('Concurrent session detected, retrying...');
-            // Retry finding the session
-            const { data: newCheck } = await supabase
-              .from('quiz_sessions')
-              .select('*')
-              .eq('user_id', user.id)
-              .is('completed_at', null)
-              .order('started_at', { ascending: false })
-              .limit(1);
-            
-            if (newCheck && newCheck.length > 0) {
-              const session = newCheck[0];
-              setSessionId(session.id);
-              setCurrentQuestion(session.current_question || 0);
-              setAnswers(Array.isArray(session.answers) ? session.answers as number[] : []);
-              onProgressUpdate(session.current_question || 0);
-              setSessionInitialized(true);
-              console.log('Using concurrent session:', session.id);
-              return;
-            }
-          }
+          console.error('Session creation error details:', error);
           throw error;
         }
 
@@ -176,13 +187,53 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
         console.log('Created new session:', data.id);
       } catch (createError) {
         console.error('Error creating session:', createError);
-        throw createError;
+        
+        // If the function fails, try direct insert as fallback
+        console.log('Attempting fallback session creation...');
+        try {
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('quiz_sessions')
+            .insert({
+              user_id: user.id,
+              total_questions: questions.length,
+              current_question: 1,
+              started_at: new Date().toISOString(),
+              answers: []
+            })
+            .select('id')
+            .single();
+
+          if (fallbackError) {
+            console.error('Fallback session creation also failed:', fallbackError);
+            throw fallbackError;
+          }
+
+          setSessionId(fallbackData.id);
+          setSessionInitialized(true);
+          console.log('Created session via fallback:', fallbackData.id);
+        } catch (fallbackCreateError) {
+          console.error('Both session creation methods failed:', fallbackCreateError);
+          
+          // As last resort, continue without session for now
+          toast({
+            title: "Session Warning",
+            description: "Could not create quiz session. You can still take the quiz, but progress won't be saved.",
+            variant: "destructive",
+          });
+          setSessionInitialized(true); // Prevent infinite retries
+        }
       }
       
     } catch (error: unknown) {
       console.error('Error finding or creating quiz session:', error);
+      toast({
+        title: "Session Error",
+        description: "Failed to initialize quiz session. You can still take the quiz.",
+        variant: "destructive",
+      });
+      setSessionInitialized(true); // Prevent infinite retries
     }
-  }, [user, questions.length, onProgressUpdate, sessionInitialized]);
+  }, [user, questions.length, onProgressUpdate, sessionInitialized, toast, progress]);
 
   const startNewQuizSession = useCallback(async () => {
     try {
@@ -213,13 +264,14 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
     if (!sessionId) return;
 
     try {
+      // Use direct update for now since RPC types aren't available
       await supabase
         .from('quiz_sessions')
         .update({
           completed_at: new Date().toISOString(),
           answers: finalAnswers,
           result: quizResult || null,
-          current_question: questions.length // Mark as fully completed
+          current_question: questions.length + 1 // Mark as fully completed (1-based)
         })
         .eq('id', sessionId);
       
@@ -229,17 +281,22 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
     }
   }, [sessionId, questions.length]);
 
-  const updateQuizSession = useCallback(async (newAnswers: number[], questionIndex: number) => {
+  const updateQuizSession = useCallback(async (newAnswers: number[], questionIndex: number, nextQuestionOverride?: number) => {
     if (!sessionId) return;
 
     try {
+      // Use the override if provided, otherwise calculate normally
+      const nextQuestionToSave = nextQuestionOverride || (questionIndex + 2);
+      
       await supabase
         .from('quiz_sessions')
         .update({
-          current_question: questionIndex + 1,
+          current_question: nextQuestionToSave, // Use the calculated or overridden value
           answers: newAnswers
         })
         .eq('id', sessionId);
+        
+      console.log('Updated session with current_question:', nextQuestionToSave, 'for session:', sessionId);
     } catch (error: unknown) {
       console.error('Error updating quiz session:', error);
     }
@@ -271,13 +328,35 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
   useEffect(() => {
     const initializeSession = async () => {
       if (!authLoading && user && questions.length > 0 && !sessionId && !sessionInitialized) {
-        console.log('Initializing session...');
+        console.log('Initializing session... Current progress:', progress, 'existingSessionId:', existingSessionId);
+        
+        // If we have an existing session ID from parent, use it directly
+        if (existingSessionId) {
+          console.log('Using existing session ID from parent:', existingSessionId);
+          setSessionId(existingSessionId);
+          setSessionInitialized(true);
+          
+          // Set the current question based on progress
+          if (progress > 0) {
+            setCurrentQuestion(progress);
+            onProgressUpdate(progress);
+          }
+          
+          // Set existing answers if provided
+          if (existingAnswers && existingAnswers.length > 0) {
+            console.log('Setting existing answers:', existingAnswers.length);
+            setAnswers(existingAnswers);
+          }
+          
+          return;
+        }
+        
         await findOrCreateQuizSession();
       }
     };
     
     initializeSession();
-  }, [authLoading, user, questions.length, sessionId, sessionInitialized, findOrCreateQuizSession]);
+  }, [authLoading, user, questions.length, sessionId, sessionInitialized, findOrCreateQuizSession, progress, existingSessionId, onProgressUpdate, existingAnswers]);
 
   const handleAnswerSelect = async (answerIndex: number) => {
     const newAnswers = [...answers, answerIndex];
@@ -286,10 +365,77 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
     const nextQuestion = currentQuestion + 1;
     onProgressUpdate(nextQuestion);
 
-    // Update session in database
-    await updateQuizSession(newAnswers, currentQuestion);
+    // Check for part completions based on question numbers
+    const questionNumber = nextQuestion; // 1-based question number
+    
+    // Update session in database BEFORE any part completion logic
+    // For part completions, ensure we save the NEXT question as current_question
+    const questionToSave = questionNumber; // This will be the next question to resume from
+    await updateQuizSession(newAnswers, currentQuestion, questionToSave);
 
-    if (nextQuestion === 5) {
+    if (questionNumber === 9) {
+      // Part 1 completed - ensure session is available
+      if (sessionId) {
+        setTimeout(() => onPartComplete(1, newAnswers, sessionId), 500);
+      } else {
+        console.error('Session ID not available for part completion, attempting to create session...');
+        // Try to create a session quickly
+        try {
+          await findOrCreateQuizSession();
+          if (sessionId) {
+            setTimeout(() => onPartComplete(1, newAnswers, sessionId), 500);
+          } else {
+            // Continue without part evaluation if session creation fails
+            setTimeout(() => setCurrentQuestion(nextQuestion), 300);
+          }
+        } catch (error) {
+          console.error('Failed to create session for part completion:', error);
+          setTimeout(() => setCurrentQuestion(nextQuestion), 300);
+        }
+      }
+      return;
+    } else if (questionNumber === 15) {
+      // Part 2 completed
+      if (sessionId) {
+        setTimeout(() => onPartComplete(2, newAnswers, sessionId), 500);
+      } else {
+        console.error('Session ID not available for part completion');
+        setTimeout(() => setCurrentQuestion(nextQuestion), 300);
+      }
+      return;
+    } else if (questionNumber === 21) {
+      // Part 3 completed
+      if (sessionId) {
+        setTimeout(() => onPartComplete(3, newAnswers, sessionId), 500);
+      } else {
+        console.error('Session ID not available for part completion');
+        setTimeout(() => setCurrentQuestion(nextQuestion), 300);
+      }
+      return;
+    } else if (questionNumber === 33) {
+      // Part 4 completed
+      if (sessionId) {
+        setTimeout(() => onPartComplete(4, newAnswers, sessionId), 500);
+      } else {
+        console.error('Session ID not available for part completion');
+        setTimeout(() => setCurrentQuestion(nextQuestion), 300);
+      }
+      return;
+    } else if (questionNumber === 49) {
+      // Part 5 completed
+      if (sessionId) {
+        setTimeout(() => onPartComplete(5, newAnswers, sessionId), 500);
+      } else {
+        console.error('Session ID not available for part completion');
+        setTimeout(() => setCurrentQuestion(nextQuestion), 300);
+      }
+      return;
+    }
+
+    // For regular question progression (non-part completions)
+    await updateQuizSession(newAnswers, currentQuestion); // Use normal update for regular questions
+
+    if (nextQuestion === 24) {
       setShowMotivation(true);
     } else if (nextQuestion === questions.length) {
       // Quiz completed - pass control to VerdictScreen to handle results
@@ -301,7 +447,7 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ onComplete, progress, onProgres
 
   const handleMotivationClose = () => {
     setShowMotivation(false);
-    setTimeout(() => setCurrentQuestion(5), 300);
+    setTimeout(() => setCurrentQuestion(currentQuestion + 1), 300);
   };
 
   if (authLoading || loading) {
