@@ -2,9 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const { user, signOut, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-purple-100">
@@ -22,7 +24,7 @@ const Navbar = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => window.location.href = '/'}
+                onClick={() => navigate('/')}
                 className="text-sm"
               >
                 Quiz
@@ -30,7 +32,7 @@ const Navbar = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => navigate('/dashboard')}
                 className="text-sm"
               >
                 Dashboard
@@ -39,7 +41,7 @@ const Navbar = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => window.location.href = '/admin'}
+                  onClick={() => navigate('/admin')}
                   className="text-sm"
                 >
                   Admin

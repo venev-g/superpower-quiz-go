@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import WelcomeScreen from '../components/WelcomeScreen';
 import QuizScreen from '../components/QuizScreen';
@@ -11,6 +12,7 @@ export type AppState = 'welcome' | 'quiz' | 'verdict' | 'part-verdict';
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [currentScreen, setCurrentScreen] = useState<AppState>('welcome');
   const [quizProgress, setQuizProgress] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -20,9 +22,9 @@ const Index = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      window.location.href = '/auth';
+      navigate('/auth');
     }
-  }, [user, loading]);
+  }, [user, loading, navigate]);
 
   const handleStartQuiz = () => {
     setCurrentScreen('quiz');
