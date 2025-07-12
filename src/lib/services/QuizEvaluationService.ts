@@ -104,6 +104,18 @@ export class QuizEvaluationService {
         throw error;
       }
 
+      // Enhanced debugging for production
+      if (data) {
+        console.log('Available column names:', Object.keys(data));
+        console.log('Looking for column:', columnName);
+        console.log('Column exists:', columnName in data);
+        console.log('Column value:', data[columnName]);
+        console.log('All data values:', Object.entries(data).reduce((acc, [key, value]) => {
+          acc[key] = typeof value === 'string' ? value.length + ' chars' : value;
+          return acc;
+        }, {} as Record<string, string | number | boolean | null>));
+      }
+
       const resultValue = data && data[columnName] ? String(data[columnName]) : 'No result available';
       console.log('Extracted result value length:', resultValue.length);
 
