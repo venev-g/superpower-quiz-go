@@ -10,6 +10,11 @@ This project is configured with GitHub Actions for Continuous Integration and Co
 - Push to `main` or `develop` branches
 - Pull requests to `main`
 
+**Permissions:**
+- `contents: write` - Required for pushing to gh-pages branch
+- `pages: write` - Required for GitHub Pages deployment
+- `id-token: write` - Required for OIDC authentication
+
 **Jobs:**
 - **Test & Lint**: Runs ESLint, TypeScript checking, and builds the project
 - **Security**: Performs security audits and checks for outdated packages
@@ -119,6 +124,33 @@ npm run preview
 2. **ESLint errors**: Run `npm run lint` locally to see issues
 3. **TypeScript errors**: Run `npx tsc --noEmit` to check types
 4. **Deployment fails**: Check environment variables and secrets
+5. **Permission denied to push to gh-pages**: 
+   - Ensure the workflow has proper permissions set at the top level
+   - Verify that `contents: write` and `pages: write` are configured
+   - Check that GitHub Pages is enabled in repository settings
+   - Confirm the `GITHUB_TOKEN` is being used correctly in the deployment step
+
+### Permission Issues Fix
+
+If you encounter a 403 error like:
+```
+remote: Permission to user/repo.git denied to github-actions[bot].
+fatal: unable to access 'https://github.com/user/repo.git/': The requested URL returned error: 403
+```
+
+This means the workflow lacks proper permissions. The workflow file already includes the necessary permissions:
+
+```yaml
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+```
+
+If issues persist:
+1. Check that GitHub Pages is enabled in Settings → Pages
+2. Ensure the repository allows GitHub Actions to push to protected branches
+3. Verify no branch protection rules are blocking the gh-pages branch
 
 ### Getting Help
 

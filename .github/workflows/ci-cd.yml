@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 env:
   NODE_VERSION: '22'
 
@@ -120,7 +125,7 @@ jobs:
           force_orphan: true
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'Deploy to GitHub Pages'
+          commit_message: 'Deploy to GitHub Pages from ${{ github.sha }}'
           # cname: your-custom-domain.com # Uncomment and add your custom domain if you have one
 
   # Deploy to Staging (optional)
