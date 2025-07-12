@@ -8,6 +8,7 @@ import { LangflowService, Session } from '@/lib/services/LangflowService';
 import { SessionManager } from './SessionManager';
 import { SearchableDropdown } from '@/components/ui/SearchableDropdown';
 import { curriculumData, CurriculumStandard, CurriculumSubject, CurriculumChapter, CurriculumTopic } from '@/lib/curriculumData';
+import { ChatMessage } from '@/types/mentor';
 
 const Tooltip = ({ text }: { text: string }) => (
   <span className="ml-2 text-xs text-gray-500 cursor-pointer group relative">
@@ -43,7 +44,7 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
   const [selectedSubject, setSelectedSubject] = useState<CurriculumSubject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<CurriculumChapter | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<CurriculumTopic | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,63 +147,63 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
       setIsTextInputEnabled(false);
       setIsManualTextInputEnabled(false);
     }
-  }, [currentSession?.id]); // Use session ID instead of entire session object
+  }, [currentSession]); // Include currentSession
 
   // Save quiz state when it changes
   useEffect(() => {
     if (currentSession) {
       LangflowService.saveSessionQuizState(currentSession.id, { isQuizActive, quizQuestionCount });
     }
-  }, [isQuizActive, quizQuestionCount, currentSession?.id]); // Use session ID instead of entire session object
+  }, [isQuizActive, quizQuestionCount, currentSession]); // Include currentSession
 
   // Save 5-year-old mode state when it changes
   useEffect(() => {
     if (currentSession) {
       LangflowService.saveSessionFiveYearOldState(currentSession.id, { isFiveYearOldMode, fiveYearOldStep });
     }
-  }, [isFiveYearOldMode, fiveYearOldStep, currentSession?.id]);
+  }, [isFiveYearOldMode, fiveYearOldStep, currentSession]);
 
   // Save quiz mode state when it changes
   useEffect(() => {
     if (currentSession) {
       LangflowService.saveSessionQuizModeState(currentSession.id, { isQuizMode, quizResponseCount });
     }
-  }, [isQuizMode, quizResponseCount, currentSession?.id]);
+  }, [isQuizMode, quizResponseCount, currentSession]);
 
   // Save first reply state when it changes
   useEffect(() => {
     if (currentSession) {
       LangflowService.saveSessionFirstReplyState(currentSession.id, { firstReplyAwaitingYesNo });
     }
-  }, [firstReplyAwaitingYesNo, currentSession?.id]);
+  }, [firstReplyAwaitingYesNo, currentSession]);
 
   // Save different approach state when it changes
   useEffect(() => {
     if (currentSession) {
       LangflowService.saveSessionDifferentApproachState(currentSession.id, { useDifferentApproachMode });
     }
-  }, [useDifferentApproachMode, currentSession?.id]);
+  }, [useDifferentApproachMode, currentSession]);
 
   // Save auto quiz state when it changes
   useEffect(() => {
     if (currentSession) {
       LangflowService.saveSessionAutoQuizState(currentSession.id, { autoQuizActive, autoQuizCount, pendingAutoQuiz });
     }
-  }, [autoQuizActive, autoQuizCount, pendingAutoQuiz, currentSession?.id]);
+  }, [autoQuizActive, autoQuizCount, pendingAutoQuiz, currentSession]);
 
   // Save text input state when it changes
   useEffect(() => {
     if (currentSession) {
       LangflowService.saveSessionTextInputState(currentSession.id, { isTextInputEnabled });
     }
-  }, [isTextInputEnabled, currentSession?.id]);
+  }, [isTextInputEnabled, currentSession]);
 
   // Save manual input state when it changes
   useEffect(() => {
     if (currentSession) {
       LangflowService.saveSessionManualInputState(currentSession.id, { isManualTextInputEnabled });
     }
-  }, [isManualTextInputEnabled, currentSession?.id]);
+  }, [isManualTextInputEnabled, currentSession]);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -217,7 +218,7 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
       const sessionMessages = LangflowService.getSessionMessages(currentSession.id);
       setMessages(sessionMessages);
     }
-  }, [currentSession?.id]);
+  }, [currentSession]);
 
   // Poll for message updates when in chat view
   useEffect(() => {
@@ -231,7 +232,7 @@ export function MentorForm({ onClose }: { onClose?: () => void }) {
     }, 1000); // Check every second
     
     return () => clearInterval(interval);
-  }, [showChat, currentSession?.id, messages.length]);
+  }, [showChat, currentSession, messages.length]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -303,7 +304,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       
       console.log('Built prompt:', prompt);
       
-      const initialMessages = [
+      const initialMessages: ChatMessage[] = [
         { sender: 'user', text: prompt }
       ];
       setMessages(initialMessages);
@@ -330,7 +331,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       // Check if this is a demo response
       const isDemoResponse = aiResponse.includes('(Demo Mode)');
       
-      const updatedMessages = [...initialMessages, { 
+      const updatedMessages: ChatMessage[] = [...initialMessages, { 
         sender: 'ai', 
         text: aiResponse,
         isDemo: isDemoResponse
@@ -360,7 +361,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     const userMessage = input.trim();
-    const updatedMessages = [...messages, { sender: 'user', text: userMessage }];
+    const updatedMessages: ChatMessage[] = [...messages, { sender: 'user', text: userMessage }];
     setMessages(updatedMessages);
     setInput('');
     setIsLoading(true);
@@ -419,7 +420,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
           }
         }
         
-        const finalMessages = [...updatedMessages, { sender: 'ai', text: aiResponse }];
+        const finalMessages: ChatMessage[] = [...updatedMessages, { sender: 'ai', text: aiResponse }];
         setMessages(finalMessages);
         // Save Super Teacher response to session
         if (currentSession) {
@@ -430,7 +431,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       setError(err instanceof Error ? err.message : 'Failed to get Super Teacher response');
       console.error('Error in handleSend:', err);
       // Add error message to chat
-      const errorMessages = [...updatedMessages, { 
+      const errorMessages: ChatMessage[] = [...updatedMessages, { 
         sender: 'ai', 
         text: 'I apologize, but I encountered an error processing your message. Please try again.' 
       }];
@@ -518,7 +519,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       setIsTextInputEnabled(true); // Enable text input after understanding
     }
     
-    const updatedMessages = [...messages, { sender: 'user', text: response }];
+    const updatedMessages: ChatMessage[] = [...messages, { sender: 'user', text: response }];
     setMessages(updatedMessages);
     setIsLoading(true);
     setError(null);
@@ -542,11 +543,11 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
         isJson = false;
       }
       if (!isJson) {
-        const finalMessages = [...updatedMessages, { 
-          sender: 'ai', 
+        const finalMessages: ChatMessage[] = [...updatedMessages, { 
+          sender: 'ai' as const, 
           text: aiResponse,
           isDemo: isDemoResponse
-        }];
+        } as ChatMessage];
         setMessages(finalMessages);
         // Save Super Teacher response to session
         if (currentSession) {
@@ -555,7 +556,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get Super Teacher response');
-      const errorMessages = [...updatedMessages, { 
+      const errorMessages: ChatMessage[] = [...updatedMessages, { 
         sender: 'ai', 
         text: 'I apologize, but I encountered an error processing your response. Please try again.' 
       }];
@@ -570,7 +571,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
   };
 
   const handleQuizAnswer = async (answer: string) => {
-    const updatedMessages = [...messages, { sender: 'user', text: answer }];
+    const updatedMessages: ChatMessage[] = [...messages, { sender: 'user' as const, text: answer } as ChatMessage];
     setMessages(updatedMessages);
     setIsLoading(true);
     setError(null);
@@ -610,11 +611,11 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
         isJson = false;
       }
       if (!isJson) {
-        const finalMessages = [...updatedMessages, { 
-          sender: 'ai', 
+        const finalMessages: ChatMessage[] = [...updatedMessages, { 
+          sender: 'ai' as const, 
           text: aiResponse,
           isDemo: isDemoResponse
-        }];
+        } as ChatMessage];
         setMessages(finalMessages);
         // Save Super Teacher response to session
         if (currentSession) {
@@ -634,10 +635,10 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get Super Teacher response');
-      const errorMessages = [...updatedMessages, { 
-        sender: 'ai', 
+      const errorMessages: ChatMessage[] = [...updatedMessages, { 
+        sender: 'ai' as const, 
         text: 'I apologize, but I encountered an error processing your answer. Please try again.' 
-      }];
+      } as ChatMessage];
       setMessages(errorMessages);
       // Save error message to session
       if (currentSession) {
@@ -653,7 +654,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
     return [];
   };
 
-  const generateQuizFeedback = (question: any, isCorrect: boolean, answer: string) => {
+  const generateQuizFeedback = (question: string, isCorrect: boolean, answer: string) => {
     // Feedback will be provided by the backend
     return '';
   };
@@ -762,7 +763,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
               <CardContent className="space-y-4">
                 {/* Standard */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                  <label className="text-sm font-semibold text-gray-800 mb-1 flex items-center">
                     Standard
                     <Tooltip text="Select your grade level (9 or 10)" />
                   </label>
@@ -783,7 +784,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                 </div>
                 {/* Subject */}
                 <div ref={subjectRef}>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                  <label className="text-sm font-semibold text-gray-800 mb-1 flex items-center">
                     Subject
                     <Tooltip text="The subject area (e.g., Mathematics, Science & Technology)" />
                   </label>
@@ -819,7 +820,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                 </div>
                 {/* Chapter */}
                 <div ref={chapterRef}>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                  <label className="text-sm font-semibold text-gray-800 mb-1 flex items-center">
                     Chapter
                     <Tooltip text="The specific chapter or unit within the subject" />
                   </label>
@@ -855,7 +856,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                 </div>
                 {/* Topic */}
                 <div ref={topicRef}>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                  <label className="text-sm font-semibold text-gray-800 mb-1 flex items-center">
                     Topic
                     <Tooltip text="The specific topic or concept within the chapter" />
                   </label>
@@ -886,7 +887,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                 </div>
                 {/* Learning Objectives */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                  <label className="text-sm font-semibold text-gray-800 mb-1 flex items-center">
                     Learning Objectives
                     <Tooltip text="What do you want to achieve? List objectives, one per line." />
                   </label>
@@ -894,7 +895,7 @@ Basically, I want a clear, structured explanation that makes it easy for beginne
                 </div>
                 {/* Prerequisite Knowledge */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1 flex items-center">
+                  <label className="text-sm font-semibold text-gray-800 mb-1 flex items-center">
                     Prerequisite Knowledge
                     <Tooltip text="What should the learner already know? List prerequisites, one per line." />
                   </label>

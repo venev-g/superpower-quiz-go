@@ -1,9 +1,24 @@
+import { 
+  ChatMessage, 
+  LangflowApiResponse, 
+  ApiPayload, 
+  SessionQuizState,
+  SessionFiveYearOldState,
+  SessionQuizModeState,
+  SessionFirstReplyState,
+  SessionDifferentApproachState,
+  SessionAutoQuizState,
+  SessionTextInputState,
+  SessionManualInputState,
+  MentorFormData
+} from '@/types/mentor';
+
 export interface LangflowResponse {
   result: {
     text: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface Session {
@@ -33,7 +48,7 @@ export class LangflowService {
     if (typeof window === 'undefined') return [];
     try {
       const sessions = localStorage.getItem(this.SESSIONS_KEY);
-      return sessions ? JSON.parse(sessions).map((s: any) => ({
+      return sessions ? JSON.parse(sessions).map((s: Session) => ({
         ...s,
         createdAt: new Date(s.createdAt),
         lastMessageAt: new Date(s.lastMessageAt)
@@ -60,7 +75,7 @@ export class LangflowService {
   }
 
   // Get messages for a specific session
-  static getSessionMessages(sessionId: string): any[] {
+  static getSessionMessages(sessionId: string): ChatMessage[] {
     if (typeof window === 'undefined') return [];
     try {
       const allMessages = localStorage.getItem(this.MESSAGES_KEY);
@@ -73,7 +88,7 @@ export class LangflowService {
   }
 
   // Save messages for a specific session
-  static saveSessionMessages(sessionId: string, messages: any[]): void {
+  static saveSessionMessages(sessionId: string, messages: ChatMessage[]): void {
     if (typeof window === 'undefined') return;
     try {
       const allMessages = localStorage.getItem(this.MESSAGES_KEY);
@@ -86,7 +101,7 @@ export class LangflowService {
   }
 
   // Add a single message to a session
-  static addMessageToSession(sessionId: string, message: any): void {
+  static addMessageToSession(sessionId: string, message: ChatMessage): void {
     if (typeof window === 'undefined') return;
     try {
       const messages = this.getSessionMessages(sessionId);
@@ -246,7 +261,7 @@ export class LangflowService {
         }
         // 3. If result is an array, join all text fields
         else if (Array.isArray(data.result)) {
-          responseText = data.result.map((item: any) => item.text || JSON.stringify(item)).join('\n');
+          responseText = data.result.map((item: { text?: string; [key: string]: unknown }) => item.text || JSON.stringify(item)).join('\n');
         }
         // 4. If result is a string
         else if (typeof data.result === 'string') {
@@ -254,15 +269,15 @@ export class LangflowService {
         }
         // 5. If data.text exists
         else if (data.text) {
-          responseText = data.text;
+          responseText = String(data.text);
         }
         // 6. If data.message exists
         else if (data.message) {
-          responseText = data.message;
+          responseText = String(data.message);
         }
         // 7. If data.content exists
         else if (data.content) {
-          responseText = data.content;
+          responseText = String(data.content);
         }
         // 8. If data.output exists
         else if (data.output) {
@@ -470,12 +485,7 @@ Try asking me to help you with:
 *Note: This is a demo response. Connect to Langflow API for full AI mentoring capabilities.*`;
   }
 
-  static async sendMentorRequest(formData: {
-    topic: string;
-    objectives: string;
-    prerequisites: string;
-    standards: string;
-  }, sessionId?: string): Promise<string> {
+  static async sendMentorRequest(formData: MentorFormData, sessionId?: string): Promise<string> {
     const prompt = `Suggest 4 simple learning steps for "${formData.topic}".
 
 Learning Objectives: ${formData.objectives}
@@ -545,7 +555,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Get quiz state for a specific session
-  static getSessionQuizState(sessionId: string): { isQuizActive: boolean, quizQuestionCount: number } {
+  static getSessionQuizState(sessionId: string): SessionQuizState {
     if (typeof window === 'undefined') return { isQuizActive: false, quizQuestionCount: 0 };
     try {
       const allQuizState = localStorage.getItem(this.QUIZ_STATE_KEY);
@@ -558,7 +568,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Save quiz state for a specific session
-  static saveSessionQuizState(sessionId: string, state: { isQuizActive: boolean, quizQuestionCount: number }): void {
+  static saveSessionQuizState(sessionId: string, state: SessionQuizState): void {
     if (typeof window === 'undefined') return;
     try {
       const allQuizState = localStorage.getItem(this.QUIZ_STATE_KEY);
@@ -586,7 +596,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Get five-year-old state for a specific session
-  static getSessionFiveYearOldState(sessionId: string): { isFiveYearOldMode: boolean, fiveYearOldStep: 'initial' | 'after_explanation' | 'after_another_example' } {
+  static getSessionFiveYearOldState(sessionId: string): SessionFiveYearOldState {
     if (typeof window === 'undefined') return { isFiveYearOldMode: false, fiveYearOldStep: 'initial' };
     try {
       const allFiveYearOldState = localStorage.getItem(this.FIVE_YEAR_OLD_STATE_KEY);
@@ -599,7 +609,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Save five-year-old state for a specific session
-  static saveSessionFiveYearOldState(sessionId: string, state: { isFiveYearOldMode: boolean, fiveYearOldStep: 'initial' | 'after_explanation' | 'after_another_example' }): void {
+  static saveSessionFiveYearOldState(sessionId: string, state: SessionFiveYearOldState): void {
     if (typeof window === 'undefined') return;
     try {
       const allFiveYearOldState = localStorage.getItem(this.FIVE_YEAR_OLD_STATE_KEY);
@@ -627,7 +637,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Get quiz mode state for a specific session
-  static getSessionQuizModeState(sessionId: string): { isQuizMode: boolean, quizResponseCount: number } {
+  static getSessionQuizModeState(sessionId: string): SessionQuizModeState {
     if (typeof window === 'undefined') return { isQuizMode: false, quizResponseCount: 0 };
     try {
       const allQuizModeState = localStorage.getItem(this.QUIZ_MODE_STATE_KEY);
@@ -640,7 +650,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Save quiz mode state for a specific session
-  static saveSessionQuizModeState(sessionId: string, state: { isQuizMode: boolean, quizResponseCount: number }): void {
+  static saveSessionQuizModeState(sessionId: string, state: SessionQuizModeState): void {
     if (typeof window === 'undefined') return;
     try {
       const allQuizModeState = localStorage.getItem(this.QUIZ_MODE_STATE_KEY);
@@ -668,7 +678,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // First Reply State Management
-  static getSessionFirstReplyState(sessionId: string): { firstReplyAwaitingYesNo: boolean } {
+  static getSessionFirstReplyState(sessionId: string): SessionFirstReplyState {
     if (typeof window === 'undefined') return { firstReplyAwaitingYesNo: false };
     try {
       const allFirstReplyState = localStorage.getItem(this.FIRST_REPLY_STATE_KEY);
@@ -680,7 +690,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
     }
   }
 
-  static saveSessionFirstReplyState(sessionId: string, state: { firstReplyAwaitingYesNo: boolean }): void {
+  static saveSessionFirstReplyState(sessionId: string, state: SessionFirstReplyState): void {
     if (typeof window === 'undefined') return;
     try {
       const allFirstReplyState = localStorage.getItem(this.FIRST_REPLY_STATE_KEY);
@@ -707,7 +717,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Different Approach State Management
-  static getSessionDifferentApproachState(sessionId: string): { useDifferentApproachMode: boolean } {
+  static getSessionDifferentApproachState(sessionId: string): SessionDifferentApproachState {
     if (typeof window === 'undefined') return { useDifferentApproachMode: false };
     try {
       const allDifferentApproachState = localStorage.getItem(this.DIFFERENT_APPROACH_STATE_KEY);
@@ -719,7 +729,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
     }
   }
 
-  static saveSessionDifferentApproachState(sessionId: string, state: { useDifferentApproachMode: boolean }): void {
+  static saveSessionDifferentApproachState(sessionId: string, state: SessionDifferentApproachState): void {
     if (typeof window === 'undefined') return;
     try {
       const allDifferentApproachState = localStorage.getItem(this.DIFFERENT_APPROACH_STATE_KEY);
@@ -746,7 +756,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Auto Quiz State Management
-  static getSessionAutoQuizState(sessionId: string): { autoQuizActive: boolean, autoQuizCount: number, pendingAutoQuiz: boolean } {
+  static getSessionAutoQuizState(sessionId: string): SessionAutoQuizState {
     if (typeof window === 'undefined') return { autoQuizActive: false, autoQuizCount: 0, pendingAutoQuiz: false };
     try {
       const allAutoQuizState = localStorage.getItem(this.AUTO_QUIZ_STATE_KEY);
@@ -758,7 +768,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
     }
   }
 
-  static saveSessionAutoQuizState(sessionId: string, state: { autoQuizActive: boolean, autoQuizCount: number, pendingAutoQuiz: boolean }): void {
+  static saveSessionAutoQuizState(sessionId: string, state: SessionAutoQuizState): void {
     if (typeof window === 'undefined') return;
     try {
       const allAutoQuizState = localStorage.getItem(this.AUTO_QUIZ_STATE_KEY);
@@ -785,7 +795,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
   }
 
   // Text Input State Management
-  static getSessionTextInputState(sessionId: string): { isTextInputEnabled: boolean } {
+  static getSessionTextInputState(sessionId: string): SessionTextInputState {
     if (typeof window === 'undefined') return { isTextInputEnabled: false };
     try {
       const allTextInputState = localStorage.getItem(this.TEXT_INPUT_STATE_KEY);
@@ -797,7 +807,7 @@ ${formData.standards ? `Aligning with: ${formData.standards}` : 'Following best 
     }
   }
 
-  static saveSessionTextInputState(sessionId: string, state: { isTextInputEnabled: boolean }): void {
+  static saveSessionTextInputState(sessionId: string, state: SessionTextInputState): void {
     if (typeof window === 'undefined') return;
     try {
       const allTextInputState = localStorage.getItem(this.TEXT_INPUT_STATE_KEY);
