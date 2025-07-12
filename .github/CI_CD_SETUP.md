@@ -127,11 +127,11 @@ npm run preview
 2. **ESLint errors**: Run `npm run lint` locally to see issues
 3. **TypeScript errors**: Run `npx tsc --noEmit` to check types
 4. **Deployment fails**: Check environment variables and secrets
-5. **404 Error on GitHub Pages**: 
-   - Ensure you've selected "GitHub Actions" as the source in Pages settings
-   - Verify the base path in `vite.config.ts` matches your repository name
-   - Check that the build is generating files in the `dist` directory
-   - Wait a few minutes after deployment for changes to propagate
+5. **404 Error on GitHub Pages (SPA Routing)**: 
+   - This project now includes automatic SPA routing support
+   - A `404.html` file redirects all routes to `index.html`
+   - React Router is configured with the correct basename for GitHub Pages
+   - Client-side routing works properly for all routes (/, /dashboard, /admin, etc.)
 6. **GitHub Actions deployment fails**: 
    - Ensure proper permissions are set in the workflow
    - Verify that GitHub Pages is enabled in repository settings
@@ -159,6 +159,31 @@ This approach is recommended when using "GitHub Actions" as the source in Pages 
 - Provides better security with OIDC authentication
 - Eliminates the need to push to a gh-pages branch
 - Works seamlessly with GitHub's Pages infrastructure
+
+### Single Page Application (SPA) Support
+
+This project is configured to work properly as a Single Page Application on GitHub Pages:
+
+**Features:**
+- **404.html Fallback**: All unknown routes redirect to the main application
+- **Client-side Routing**: React Router handles all navigation
+- **Conditional Base Path**: Uses `/superpower-quiz-go/` in production, `/` in development
+- **Proper Navigation**: All internal links use React Router instead of direct URL changes
+
+**How it works:**
+1. GitHub Pages serves `404.html` for any route that doesn't exist
+2. The `404.html` script converts the path to a query parameter and redirects to `index.html`
+3. A script in `index.html` reads the query parameter and restores the original route
+4. React Router takes over and renders the appropriate component
+
+**Supported Routes:**
+- `/` - Main quiz application
+- `/auth` - Authentication page
+- `/dashboard` - User dashboard
+- `/admin` - Admin panel (for authorized users)
+- `/mentor` - Mentor page
+
+All routes work correctly when accessed directly or shared as links.
 
 If issues persist:
 1. Check that GitHub Pages is enabled in Settings → Pages
