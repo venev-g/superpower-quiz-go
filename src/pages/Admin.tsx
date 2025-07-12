@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import AdminQuestions from '@/components/admin/AdminQuestions';
 import AdminCategories from '@/components/admin/AdminCategories';
 import AdminUsers from '@/components/admin/AdminUsers';
@@ -13,6 +14,7 @@ import AdminAnalytics from '@/components/admin/AdminAnalytics';
 
 const Admin = () => {
   const { user, loading, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [checkingRole, setCheckingRole] = useState(true);
   const { toast } = useToast();
 
@@ -34,7 +36,7 @@ const Admin = () => {
   }
 
   if (!user) {
-    window.location.href = '/auth';
+    navigate('/auth');
     return null;
   }
 
@@ -46,7 +48,7 @@ const Admin = () => {
             <div className="text-4xl">🚫</div>
             <h2 className="text-xl font-bold text-gray-800">Access Denied</h2>
             <p className="text-gray-600">You don't have admin privileges to access this page.</p>
-            <Button onClick={() => window.location.href = '/'} className="w-full">
+            <Button onClick={() => navigate('/')} className="w-full">
               Go to Home
             </Button>
           </div>

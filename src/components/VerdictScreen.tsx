@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface VerdictScreenProps {
   answers: number[];
@@ -21,6 +22,7 @@ interface PersonalityResult {
 }
 
 const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, sessionId, onRestart }) => {
+  const navigate = useNavigate();
   const [showConfetti, setShowConfetti] = useState(false);
   const [result, setResult] = useState<PersonalityResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,7 +146,7 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, sessionId, onRes
   };
 
   const handleViewDashboard = () => {
-    window.location.href = '/dashboard';
+    navigate('/dashboard');
   };
 
   if (loading) {

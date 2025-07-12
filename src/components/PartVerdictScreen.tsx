@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { QuizEvaluationService } from '@/lib/services/QuizEvaluationService';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ReactMarkdown from 'react-markdown';
@@ -20,6 +21,7 @@ const PartVerdictScreen: React.FC<PartVerdictScreenProps> = ({
   userId, 
   onContinue 
 }) => {
+  const navigate = useNavigate();
   const [apiResponse, setApiResponse] = useState<string>('');
   const [dbResponse, setDbResponse] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -159,7 +161,7 @@ const PartVerdictScreen: React.FC<PartVerdictScreenProps> = ({
   };
 
   const handleReturnToDashboard = () => {
-    window.location.href = '/dashboard';
+    navigate('/dashboard');
   };
 
   const initializePartVerdict = useCallback(async () => {

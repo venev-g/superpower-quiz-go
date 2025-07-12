@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
 
 const Auth = () => {
@@ -16,6 +17,7 @@ const Auth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [showResendConfirmation, setShowResendConfirmation] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth state listener
@@ -31,7 +33,7 @@ const Auth = () => {
         if (session?.user) {
           console.log('User logged in, redirecting...');
           setTimeout(() => {
-            window.location.href = '/';
+            navigate('/');
           }, 500);
         } else {
           console.log('No valid session found');
@@ -46,12 +48,12 @@ const Auth = () => {
       setUser(session?.user ?? null);
       if (session?.user) {
         console.log('Existing session found, redirecting...');
-        window.location.href = '/';
+        navigate('/');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

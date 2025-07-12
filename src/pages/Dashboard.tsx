@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Trophy, Calendar, Target, BarChart3, Eye, Play, MessageSquare } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
@@ -34,6 +35,7 @@ interface UserAnalytics {
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [results, setResults] = useState<UserResult[]>([]);
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
@@ -42,7 +44,7 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   const handleMentorClick = () => {
-    window.location.href = '/mentor';
+    navigate('/mentor');
   };
 
   const loadUserData = useCallback(async () => {
@@ -115,9 +117,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      window.location.href = '/auth';
+      navigate('/auth');
     }
-  }, [user, loading]);
+  }, [user, loading, navigate]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
@@ -139,7 +141,7 @@ const Dashboard = () => {
   };
 
   const handleStartNewAssessment = () => {
-    window.location.href = '/';
+    navigate('/');
   };
 
   const handleViewResult = (result: UserResult) => {
