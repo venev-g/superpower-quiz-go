@@ -14,7 +14,7 @@ export interface DatabaseResult {
 }
 
 export class QuizEvaluationService {
-  private static readonly WEBHOOK_BASE_URL = 'https://029e74fcfb01.ngrok-free.app';
+  private static readonly WEBHOOK_BASE_URL = 'https://029e74fcfb01.ngrok-free.app/webhook';
 
   /**
    * Call external webhook API for quiz part evaluation
