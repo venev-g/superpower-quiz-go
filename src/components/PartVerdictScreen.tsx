@@ -33,53 +33,16 @@ const PartVerdictScreen: React.FC<PartVerdictScreenProps> = ({
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null); // Track timeout for cleanup
   const { toast } = useToast();
 
-  // Helper function to check if content is JSON
-  const isJsonString = (str: string): boolean => {
-    try {
-      JSON.parse(str);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  // Helper function to format JSON content for Part 4
-  const formatJsonContent = (jsonString: string) => {
-    try {
-      const data = JSON.parse(jsonString);
-      return (
-        <div className="space-y-4">
-          {Object.entries(data).map(([key, value]) => (
-            <div key={key} className="border-l-4 border-purple-300 pl-4">
-              <h4 className="font-semibold text-purple-800 text-lg mb-2 capitalize">
-                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-              </h4>
-              <div className="text-gray-700 leading-relaxed">
-                {typeof value === 'object' ? (
-                  <pre className="bg-gray-50 p-3 rounded-lg text-sm overflow-x-auto">
-                    {JSON.stringify(value, null, 2)}
-                  </pre>
-                ) : (
-                  <p className="text-base">{String(value)}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    } catch (error) {
-      return <p className="text-gray-700 leading-relaxed">{jsonString}</p>;
-    }
-  };
-
   // Helper function to render content based on type
-  const renderContent = (content: string, isPart4: boolean = false) => {
+  const renderContent = (content: string) => {
     if (!content) return <p className="text-gray-500">No content available</p>;
 
-    // For Part 4, check if it's JSON and format accordingly
-    if (isPart4 && isJsonString(content)) {
-      return formatJsonContent(content);
-    }
+    // Convert line breaks to proper formatting for plain text
+    const formattedContent = content
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n\n');
 
     // For markdown content, use ReactMarkdown
     return (
@@ -121,7 +84,7 @@ const PartVerdictScreen: React.FC<PartVerdictScreenProps> = ({
             ),
           }}
         >
-          {content}
+          {formattedContent}
         </ReactMarkdown>
       </div>
     );
@@ -360,7 +323,7 @@ const PartVerdictScreen: React.FC<PartVerdictScreenProps> = ({
           </h2>
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-3 sm:p-4 rounded-2xl border border-purple-100">
             <div className="text-sm sm:text-base">
-              {renderContent(apiResponse, part === 4)}
+              {renderContent(apiResponse)}
             </div>
           </div>
         </div>
@@ -388,7 +351,7 @@ const PartVerdictScreen: React.FC<PartVerdictScreenProps> = ({
           ) : (
             <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 sm:p-4 rounded-2xl border border-green-100">
               <div className="text-sm sm:text-base">
-                {renderContent(dbResponse, part === 4)}
+                {renderContent(dbResponse)}
               </div>
             </div>
           )}

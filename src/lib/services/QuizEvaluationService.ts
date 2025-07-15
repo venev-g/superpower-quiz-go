@@ -51,9 +51,12 @@ export class QuizEvaluationService {
 
       const data = await response.text();
       
+      // Convert JSON response to plain text if it's JSON
+      const formattedData = this.formatApiResponse(data);
+      
       return {
         success: true,
-        data: data
+        data: formattedData
       };
     } catch (error) {
       console.error(`Error calling part ${part} webhook:`, error);
@@ -119,9 +122,12 @@ export class QuizEvaluationService {
       const resultValue = data && data[columnName] ? String(data[columnName]) : 'No result available';
       console.log('Extracted result value length:', resultValue.length);
 
+      // Format the database result to convert JSON to plain text
+      const formattedResult = this.formatApiResponse(resultValue);
+
       return {
         success: true,
-        data: resultValue
+        data: formattedResult
       };
     } catch (error) {
       console.error(`Error fetching part ${part} result:`, error);
@@ -149,9 +155,14 @@ export class QuizEvaluationService {
 
       if (error) throw error;
 
+      const finalResult = data?.final_result || 'No final report available';
+      
+      // Format the final report to convert JSON to plain text
+      const formattedFinalReport = this.formatApiResponse(finalResult);
+
       return {
         success: true,
-        data: data?.final_result || 'No final report available'
+        data: formattedFinalReport
       };
     } catch (error) {
       console.error('Error fetching final report:', error);
@@ -480,6 +491,144 @@ export class QuizEvaluationService {
     }
 
     return htmlContent;
+  }
+
+  /**
+   * Format API response to convert JSON to readable plain text
+   */
+  private static formatApiResponse(data: string): string {
+    if (!data || typeof data !== 'string') {
+      return 'No response received';
+    }
+
+    // Try to parse as JSON first
+    try {
+      const parsed = JSON.parse(data);
+      
+      // If it's an object, convert to readable text
+      if (typeof parsed === 'object' && parsed !== null) {
+        // Special handling for learning style data
+        if (this.isLearningStyleData(parsed)) {
+          return this.formatLearningStyleData(parsed as Record<string, unknown>);
+        }
+        
+        return this.convertJsonToText(parsed);
+      }
+      
+      // If it's already a string, return as is
+      return String(parsed);
+    } catch (error) {
+      // If not JSON, return the original data
+      return data;
+    }
+  }
+
+  /**
+   * Check if the data structure matches learning style format
+   */
+  private static isLearningStyleData(obj: unknown): boolean {
+    return obj && 
+           typeof obj === 'object' && 
+           obj !== null &&
+           ('scores' in obj || 'dominant_styles' in obj || 'learning_type' in obj);
+  }
+
+  /**
+   * Format learning style data into a readable format
+   */
+  private static formatLearningStyleData(data: Record<string, unknown>): string {
+    const parts: string[] = [];
+
+    // Format scores section
+    if (data.scores && typeof data.scores === 'object' && data.scores !== null) {
+      const scoreEntries = Object.entries(data.scores)
+        .map(([style, score]) => `• ${style}: ${score}`)
+        .join('\n');
+      parts.push(`Learning Style Scores:\n${scoreEntries}`);
+    }
+
+    // Format dominant styles
+    if (data.dominant_styles && Array.isArray(data.dominant_styles)) {
+      const dominantList = data.dominant_styles
+        .map(style => `• ${String(style)}`)
+        .join('\n');
+      parts.push(`Your Dominant Learning Styles:\n${dominantList}`);
+    }
+
+    // Format learning type
+    if (data.learning_type) {
+      parts.push(`Primary Learning Type: ${String(data.learning_type)}`);
+    }
+
+    // Format micro feedback
+    if (data.micro_feedback) {
+      parts.push(`Assessment Summary:\n${String(data.micro_feedback)}`);
+    }
+
+    // If no specific learning style data found, fall back to general conversion
+    if (parts.length === 0) {
+      return this.convertJsonToText(data);
+    }
+
+    return parts.join('\n\n');
+  }
+
+  /**
+   * Convert JSON object to readable plain text
+   */
+  private static convertJsonToText(obj: unknown): string {
+    if (typeof obj === 'string') {
+      return obj;
+    }
+    
+    if (typeof obj !== 'object' || obj === null) {
+      return String(obj);
+    }
+
+    const textParts: string[] = [];
+
+    // Handle different object structures
+    for (const [key, value] of Object.entries(obj)) {
+      // Special handling for "text" key - return value without label
+      if (key.toLowerCase() === 'text' && typeof value === 'string') {
+        textParts.push(String(value));
+        continue;
+      }
+
+      const cleanKey = key
+        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+        .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+        .replace(/_/g, ' ') // Replace underscores with spaces
+        .trim();
+
+      if (Array.isArray(value)) {
+        // If value is an array, join the items
+        const arrayText = value.map(item => 
+          typeof item === 'object' ? this.convertJsonToText(item) : String(item)
+        ).join(', ');
+        textParts.push(`${cleanKey}: ${arrayText}`);
+      } else if (typeof value === 'object' && value !== null) {
+        // Special handling for scores object to make it more readable
+        if (key.toLowerCase() === 'scores') {
+          const scoresText = Object.entries(value)
+            .map(([scoreKey, scoreValue]) => `${scoreKey}: ${scoreValue}`)
+            .join(', ');
+          textParts.push(`${cleanKey}: ${scoresText}`);
+        } else {
+          // If value is an object, recursively convert it
+          const nestedText = this.convertJsonToText(value);
+          // Only add the key if the nested text has content
+          if (nestedText.trim()) {
+            textParts.push(`${cleanKey}: ${nestedText}`);
+          }
+        }
+      } else {
+        // Simple key-value pair
+        textParts.push(`${cleanKey}: ${String(value)}`);
+      }
+    }
+
+    return textParts.join('\n\n');
   }
 
   /**

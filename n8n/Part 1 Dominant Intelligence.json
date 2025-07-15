@@ -21,7 +21,7 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -1600,
+        -1560,
         -80
       ],
       "id": "4f849817-3a89-4aa2-a8da-2447261d9b6e",
@@ -223,31 +223,9 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-4o-mini",
-        "options": {
-          "responseFormat": "text",
-          "temperature": 0.3
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        440,
-        80
-      ],
-      "id": "f43bc634-0164-4aa1-93a0-b62028682608",
-      "name": "OpenRouter Chat Model",
-      "credentials": {
-        "openRouterApi": {
-          "id": "pOf8yQxnWcAZguCL",
-          "name": "OpenRouter account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "httpMethod": "POST",
         "path": "part1",
+        "responseMode": "responseNode",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
@@ -313,7 +291,7 @@
         "filters": {
           "conditions": [
             {
-              "keyName": "sesssionID",
+              "keyName": "sessionID",
               "condition": "eq",
               "keyValue": "={{ $json.body.session_id }}"
             },
@@ -384,6 +362,42 @@
       ],
       "id": "90ee1e3d-6d31-476b-a4ca-5e3de82bfe36",
       "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1180,
+        -240
+      ],
+      "id": "0c152228-dd3a-4df3-9c1b-12b7e24a6029",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "maxOutputTokens": 20000,
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        380,
+        100
+      ],
+      "id": "1609926a-8f02-4b3a-b47b-91ad9237c229",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GCBFWOdP4Hr732eQ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -525,17 +539,6 @@
         ]
       ]
     },
-    "OpenRouter Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook": {
       "main": [
         [
@@ -545,12 +548,12 @@
             "index": 0
           },
           {
-            "node": "Get many rows",
+            "node": "No Operation, do nothing",
             "type": "main",
             "index": 0
           },
           {
-            "node": "No Operation, do nothing",
+            "node": "Get many rows",
             "type": "main",
             "index": 0
           }
@@ -605,13 +608,35 @@
           }
         ]
       ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ddf75738-2ffe-4c7e-b0bd-6724b03791d6",
+  "versionId": "496147da-51a5-4f28-b4b4-876da8d0893c",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ba0d21f0df791d5f99eb31c8d27515b7c53390f46c3fe1cb1b6ebf0de7d7e768"
