@@ -5,9 +5,10 @@ import { Card } from '@/components/ui/card';
 
 interface WelcomeScreenProps {
   onStart: () => void;
+  onStartStandalone?: () => void;
 }
 
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
+const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart, onStartStandalone }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen space-y-6 px-4 animate-fade-in">
       {/* Hero Section */}
@@ -17,7 +18,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
           Unlock Your Superpower Personality
         </h1>
         <p className="text-base text-gray-600 font-medium">
-          Discover your leadership style in 10 questions
+          Discover your unique traits and abilities
         </p>
       </div>
 
@@ -28,7 +29,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
             <span className="text-xl">⚡</span>
             <div>
               <h3 className="font-semibold text-blue-800 text-sm">Quick & Fun</h3>
-              <p className="text-xs text-blue-600">Just 10 questions, 5 minutes</p>
+              <p className="text-xs text-blue-600">Multiple assessment options</p>
             </div>
           </div>
         </Card>
@@ -54,14 +55,27 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
         </Card>
       </div>
 
-      {/* CTA Button */}
-      <Button 
-        onClick={onStart}
-        size="lg"
-        className="w-full max-w-sm h-12 text-lg font-semibold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-      >
-        Start Quiz 🚀
-      </Button>
+      {/* Quiz Options */}
+      <div className="w-full max-w-sm space-y-3">
+        
+
+        {/* Standalone Quizzes Button */}
+        {onStartStandalone && (
+          <Button 
+            onClick={onStartStandalone}
+            variant="outline"
+            size="lg"
+            className="w-full h-12 text-lg font-semibold border-2 border-purple-200 hover:border-purple-300 text-purple-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          >
+            Individual Tests 🎯
+          </Button>
+        )}
+      </div>
+
+      {/* Info Text */}
+      <p className="text-xs text-gray-500 text-center max-w-sm">
+        Choose complete assessment for comprehensive results or individual tests for focused insights
+      </p>
     </div>
   );
 };

@@ -7,8 +7,9 @@ import WelcomeScreen from '../components/WelcomeScreen';
 import QuizScreen from '../components/QuizScreen';
 import VerdictScreen from '../components/VerdictScreen';
 import PartVerdictScreen from '../components/PartVerdictScreen';
+import StandaloneQuizContainer from '../components/StandaloneQuizContainer';
 
-export type AppState = 'welcome' | 'quiz' | 'verdict' | 'part-verdict';
+export type AppState = 'welcome' | 'quiz' | 'verdict' | 'part-verdict' | 'standalone';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -28,6 +29,10 @@ const Index = () => {
 
   const handleStartQuiz = () => {
     setCurrentScreen('quiz');
+  };
+
+  const handleStartStandalone = () => {
+    setCurrentScreen('standalone');
   };
 
   const handleQuizComplete = (finalAnswers: number[], quizSessionId: string | null) => {
@@ -60,6 +65,10 @@ const Index = () => {
     setQuizKey(prev => prev + 1);
   };
 
+  const handleBackToWelcome = () => {
+    setCurrentScreen('welcome');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
@@ -81,7 +90,14 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-4 max-w-full sm:max-w-md lg:max-w-6xl">
         {currentScreen === 'welcome' && (
-          <WelcomeScreen onStart={handleStartQuiz} />
+          <WelcomeScreen 
+            onStart={handleStartQuiz} 
+            onStartStandalone={handleStartStandalone}
+          />
+        )}
+        
+        {currentScreen === 'standalone' && (
+          <StandaloneQuizContainer />
         )}
         
         {currentScreen === 'quiz' && (

@@ -11,17 +11,19 @@ import { Trophy, Calendar, Target, BarChart3, Eye, Play, MessageSquare } from 'l
 import { Database } from '@/integrations/supabase/types';
 import { MentorForm } from '@/components/MentorForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import StandaloneQuizDashboard from '@/components/StandaloneQuizDashboard';
 
 type QuizSession = Database['public']['Tables']['quiz_sessions']['Row'];
-type QuizResult = Database['public']['Tables']['quiz_results']['Row'];
+type DetailResult = Database['public']['Tables']['detail_result']['Row'];
 
 type UserSession = QuizSession;
 
-interface UserResult extends QuizResult {
+interface UserResult extends DetailResult {
   quiz_sessions?: {
     started_at: string;
     completed_at: string | null;
     total_questions: number | null;
+    score?: number | null;
   };
 }
 
@@ -61,18 +63,19 @@ const Dashboard = () => {
       if (sessionsError) throw sessionsError;
       setSessions(sessionsData || []);
 
-      // Load user results from quiz_results
+      // Load user results from detail_result
       const { data: resultsData, error: resultsError } = await supabase
-        .from('quiz_results')
+        .from('detail_result')
         .select(`
           *,
           quiz_sessions (
             started_at,
             completed_at,
-            total_questions
+            total_questions,
+            score
           )
         `)
-        .eq('user_id', user.id)
+        .eq('userID', user.id)
         .order('created_at', { ascending: false });
 
       if (resultsError) throw resultsError;
@@ -84,9 +87,10 @@ const Dashboard = () => {
       const averageCompletionRate = totalAttempts > 0 ? (completedAttempts / totalAttempts) * 100 : 0;
       const lastAttemptAt = sessionsData?.[0]?.started_at || null;
       
-      // Calculate average score from results
-      const averageScore = resultsData && resultsData.length > 0 
-        ? resultsData.reduce((sum, result) => sum + (result.score || 0), 0) / resultsData.length 
+      // Calculate average score from quiz_sessions
+      const sessionsWithScores = sessionsData?.filter(s => s.score !== null) || [];
+      const averageScore = sessionsWithScores.length > 0 
+        ? sessionsWithScores.reduce((sum, session) => sum + (session.score || 0), 0) / sessionsWithScores.length 
         : 0;
 
       setAnalytics({
@@ -146,6 +150,14 @@ const Dashboard = () => {
 
   const handleViewResult = (result: UserResult) => {
     setSelectedResult(result);
+  };
+
+  const getResultTitle = (result: UserResult) => {
+    return result["Personality Pattern"] || result["Dominant Intelligence"] || result["Learning Style"] || 'Assessment Result';
+  };
+
+  const getResultScore = (result: UserResult) => {
+    return result.quiz_sessions?.score || 0;
   };
 
   if (loading || loadingData) {
@@ -243,6 +255,9 @@ const Dashboard = () => {
               </div>
             )}
 
+            {/* Standalone Quiz Results */}
+            <StandaloneQuizDashboard />
+
             {/* Sessions and Results */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Sessions */}
@@ -289,7 +304,7 @@ const Dashboard = () => {
                     <div key={result.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="font-medium">
-                          {result.personality_type || 'Personality Assessment'}
+                          {getResultTitle(result)}
                         </h3>
                         <Button
                           variant="outline"
@@ -301,7 +316,7 @@ const Dashboard = () => {
                         </Button>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">
-                        Score: {result.score}/100
+                        Score: {getResultScore(result)}/100
                       </p>
                       <div className="text-xs text-gray-500">
                         Completed: {formatDate(result.created_at)}
@@ -329,8 +344,8 @@ const Dashboard = () => {
                 ← Back to Dashboard
               </Button>
               <div>
-                <h2 className="text-2xl font-bold">{selectedResult.personality_type}</h2>
-                <p className="text-gray-600">Personality Assessment Result</p>
+                <h2 className="text-2xl font-bold">{getResultTitle(selectedResult)}</h2>
+                <p className="text-gray-600">Assessment Result</p>
               </div>
             </div>
 
@@ -343,12 +358,12 @@ const Dashboard = () => {
                     <p>{formatDate(selectedResult.created_at)}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Personality Type</label>
-                    <p>{selectedResult.personality_type}</p>
+                    <label className="text-sm font-medium text-gray-600">Result Type</label>
+                    <p>{getResultTitle(selectedResult)}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Score</label>
-                    <p className="text-blue-600">{selectedResult.score}/100</p>
+                    <p className="text-blue-600">{getResultScore(selectedResult)}/100</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Status</label>
@@ -363,8 +378,8 @@ const Dashboard = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-600">Assessment Result</label>
                     <div className="mt-2 p-3 bg-blue-50 rounded text-sm">
-                      <p className="font-medium">{selectedResult.personality_type}</p>
-                      <p className="text-gray-600 mt-1">Score: {selectedResult.score}/100</p>
+                      <p className="font-medium">{getResultTitle(selectedResult)}</p>
+                      <p className="text-gray-600 mt-1">Score: {getResultScore(selectedResult)}/100</p>
                     </div>
                   </div>
                   {selectedResult.quiz_sessions && (

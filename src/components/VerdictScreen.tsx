@@ -47,15 +47,14 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, sessionId, onRes
           })
           .eq('id', sessionId);
 
-        // Save the quiz result
+        // Save the quiz result to detail_result table
         await supabase
-          .from('quiz_results')
+          .from('detail_result')
           .insert([{
-            session_id: sessionId,
-            user_id: user.id,
-            personality_type: personalityResult.title,
-            score: personalityResult.score,
-            answers: answers
+            sessionID: sessionId,
+            userID: user.id,
+            "Personality Pattern": personalityResult.title,
+            final_result: personalityResult.description
           }]);
       } else {
         // Fallback: create session if somehow sessionId is missing
@@ -80,15 +79,14 @@ const VerdictScreen: React.FC<VerdictScreenProps> = ({ answers, sessionId, onRes
 
         if (sessionError) throw sessionError;
 
-        // Save the quiz result
+        // Save the quiz result to detail_result table
         await supabase
-          .from('quiz_results')
+          .from('detail_result')
           .insert([{
-            session_id: session.id,
-            user_id: user.id,
-            personality_type: personalityResult.title,
-            score: personalityResult.score,
-            answers: answers
+            sessionID: session.id,
+            userID: user.id,
+            "Personality Pattern": personalityResult.title,
+            final_result: personalityResult.description
           }]);
       }
 

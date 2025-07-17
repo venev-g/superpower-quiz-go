@@ -47,7 +47,7 @@ export function SessionManager({ onSessionSelect, currentSessionId }: SessionMan
     
     // Add initial messages to the session
     const initialMessages = [
-      { sender: 'user', text: initialPrompt }
+      { sender: 'user' as const, text: initialPrompt }
     ];
     LangflowService.saveSessionMessages(newSession.id, initialMessages);
     
@@ -73,7 +73,7 @@ export function SessionManager({ onSessionSelect, currentSessionId }: SessionMan
         
         // Add AI response to messages
         const updatedMessages = [...initialMessages, { 
-          sender: 'ai', 
+          sender: 'ai' as const, 
           text: aiResponse,
           isDemo: aiResponse.includes('(Demo Mode)')
         }];
@@ -90,7 +90,7 @@ export function SessionManager({ onSessionSelect, currentSessionId }: SessionMan
         console.error('Error sending initial prompt:', error);
         // Add error message to chat
         const errorMessages = [...initialMessages, { 
-          sender: 'ai', 
+          sender: 'ai' as const, 
           text: 'I apologize, but I encountered an error processing your request. Please try again.' 
         }];
         LangflowService.saveSessionMessages(newSession.id, errorMessages);

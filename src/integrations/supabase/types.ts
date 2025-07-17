@@ -17,37 +17,31 @@ export type Database = {
       detail_result: {
         Row: {
           created_at: string
+          "Dominant Intelligence": string | null
           final_result: string | null
           id: number
-          "Learning Style VARK (part 5)": string | null
-          "Part 1 (Dominant Intelligence)": string | null
-          "Part 2 (Dominant Intelligence)": string | null
-          "Part 3 (Dominant Intelligence)": string | null
-          "Personality Style (part 4)": string | null
+          "Learning Style": string | null
+          "Personality Pattern": string | null
           sessionID: string | null
           userID: string | null
         }
         Insert: {
           created_at?: string
+          "Dominant Intelligence"?: string | null
           final_result?: string | null
           id?: number
-          "Learning Style VARK (part 5)"?: string | null
-          "Part 1 (Dominant Intelligence)"?: string | null
-          "Part 2 (Dominant Intelligence)"?: string | null
-          "Part 3 (Dominant Intelligence)"?: string | null
-          "Personality Style (part 4)"?: string | null
+          "Learning Style"?: string | null
+          "Personality Pattern"?: string | null
           sessionID?: string | null
           userID?: string | null
         }
         Update: {
           created_at?: string
+          "Dominant Intelligence"?: string | null
           final_result?: string | null
           id?: number
-          "Learning Style VARK (part 5)"?: string | null
-          "Part 1 (Dominant Intelligence)"?: string | null
-          "Part 2 (Dominant Intelligence)"?: string | null
-          "Part 3 (Dominant Intelligence)"?: string | null
-          "Personality Style (part 4)"?: string | null
+          "Learning Style"?: string | null
+          "Personality Pattern"?: string | null
           sessionID?: string | null
           userID?: string | null
         }
@@ -55,7 +49,7 @@ export type Database = {
           {
             foreignKeyName: "detail_result_sessionID_fkey"
             columns: ["sessionID"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "quiz_sessions"
             referencedColumns: ["id"]
           },
@@ -116,7 +110,7 @@ export type Database = {
           id: string
           is_active: boolean
           options: Json
-          sequence_order: number
+          sequence_order: number | null
           subtitle: string | null
           title: string
           updated_at: string
@@ -127,7 +121,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           options: Json
-          sequence_order?: number
+          sequence_order?: number | null
           subtitle?: string | null
           title: string
           updated_at?: string
@@ -138,7 +132,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           options?: Json
-          sequence_order?: number
+          sequence_order?: number | null
           subtitle?: string | null
           title?: string
           updated_at?: string
@@ -153,79 +147,55 @@ export type Database = {
           },
         ]
       }
-      quiz_results: {
-        Row: {
-          answers: Json
-          created_at: string
-          id: string
-          personality_type: string
-          score: number
-          session_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          answers: Json
-          created_at?: string
-          id?: string
-          personality_type: string
-          score?: number
-          session_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          answers?: Json
-          created_at?: string
-          id?: string
-          personality_type?: string
-          score?: number
-          session_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_results_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       quiz_sessions: {
         Row: {
           answers: Json | null
+          category_id: string | null
           completed_at: string | null
+          created_at: string | null
           current_question: number | null
           id: string
-          result: Json | null
+          quiz_type: string | null
           score: number | null
-          started_at: string
+          started_at: string | null
           total_questions: number | null
           user_id: string | null
         }
         Insert: {
           answers?: Json | null
+          category_id?: string | null
           completed_at?: string | null
+          created_at?: string | null
           current_question?: number | null
           id?: string
-          result?: Json | null
+          quiz_type?: string | null
           score?: number | null
-          started_at?: string
+          started_at?: string | null
           total_questions?: number | null
           user_id?: string | null
         }
         Update: {
           answers?: Json | null
+          category_id?: string | null
           completed_at?: string | null
+          created_at?: string | null
           current_question?: number | null
           id?: string
-          result?: Json | null
+          quiz_type?: string | null
           score?: number | null
-          started_at?: string
+          started_at?: string | null
           total_questions?: number | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quiz_sessions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "question_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
