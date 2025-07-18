@@ -360,7 +360,7 @@ export class StandaloneQuizService {
   ): Promise<StandaloneQuizResult> {
     try {
       const endpoint = this.getWebhookEndpoint(quizType);
-      const webhookUrl = `http://localhost:5678${endpoint}`;
+      const webhookUrl = `https://dc86ad33a5d5.ngrok-free.app${endpoint}`;
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
